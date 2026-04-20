@@ -1,16 +1,77 @@
 import express from "express";
-import cors from 'cors';
+import cors from "cors";
 import cookieParser from "cookie-parser";
-
+import helmet from "helmet";
+import morgan from "morgan";
+import rateLimit from "express-rate-limit";
 
 export const app = express();
 
-app.use(cors({
-    origin: process.env.CORS_ORIGIN,
-    credentials: true
-}))
+// Security headers
+app.use(helmet());
 
-app.use(express.json({limit: "16kb"}))
-app.use(express.urlencoded({extended: true, limit: "16kb"}))
-app.use(express.static("public"))
-app.use(cookieParser())
+// Logging
+app.use(morgan("dev"));
+
+// Rate limiting (basic)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+});
+app.use(limiter);
+
+// CORS
+const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
+
+// Body parsers
+app.use(express.json({ limit: "16kb" }));
+app.use(express.urlencoded({ extended: true, limit: "16kb" }));
+
+// Cookies
+app.use(cookieParser());
+
+// Static files
+app.use(express.static("public"));
+
+// Health check route (important in production)
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "OK" });
+});
+
+// Routes
+import {router as userRoutes} from "./routes/user.routes.js";
+import { ApiError } from "./utils/ApiError.js";
+
+app.use("/api/v1/users", userRoutes);
+
+// Global error handler
+
+app.use((err, req, res, next) => {
+  console.log("ERROR:", err);
+
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  if (err instanceof ApiError) {
+    return res.status(err.statusCode).json(err);
+  }
+
+  res.status(500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
+});
