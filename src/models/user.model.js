@@ -1,8 +1,9 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
-import bcrypt from "bcryptjs";
+import bcrypt from 'bcryptjs';
 
-const userSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema(
+  {
     username: {
       type: String,
       required: true,
@@ -24,66 +25,69 @@ const userSchema = new mongoose.Schema({
       type: String,
       required: true,
       minlength: 6,
-      select: false, 
+      select: false,
     },
 
     role: {
       type: String,
-      enum: ["user", "admin"],
-      default: "user",
+      enum: ['user', 'admin'],
+      default: 'user',
     },
 
     avatar: {
-      type: String, 
+      type: String,
     },
 
     isVerified: {
       type: Boolean,
       default: false,
     },
-
+    
     refreshToken: {
       type: String,
       select: false,
     },
-  }, {timestamps: true})
+  },
+  { timestamps: true }
+);
 
 //   HASHING PASSWORD
-  userSchema.pre("save", async function (){
-    if(!this.isModified("password")) return;
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
 
-    this.password = await bcrypt.hash(this.password, 10);
-  });
+  this.password = await bcrypt.hash(this.password, 10);
+});
 
 //   COMPARING PASSWORD
-  userSchema.methods.isPasswordCorrect = async function(password){
-    return await bcrypt.compare(password, this.password)
-  }
+userSchema.methods.isPasswordCorrect = async function (password) {
+  return await bcrypt.compare(password, this.password);
+};
 
-//   GENERATING ACCESS TOKEN
-  userSchema.methods.generateAccessToken = function () {
-    return jwt.sign({
-        _id: this._id,
-        email: this.email,
-        role: this.role
+// GENERATE ACCESS TOKEN
+userSchema.methods.generateAccessToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+      role: this.role,
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
-        expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
     }
-    )
-  }
+  );
+};
 
-//   GENERATING REFRESH TOKEN
-  userSchema.methods.generateRefreshToken = function (){
-    return jwt.sign({
-        _id: this._id
+// GENERATE REFRESH TOKEN
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
     },
     process.env.REFRESH_TOKEN_SECRET,
     {
-        expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
     }
-)
-  }
+  );
+};
 
-export const User = mongoose.model("User", userSchema)
+export const User = mongoose.model('User', userSchema);
