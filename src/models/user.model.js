@@ -38,11 +38,26 @@ const userSchema = new mongoose.Schema(
       type: String,
     },
 
+    addresses: [
+      {
+        fullName: String,
+        phone: String,
+        addressLine: String,
+        city: String,
+        postalCode: String,
+        country: String,
+        isDefault: {
+          type: Boolean,
+          default: false,
+        },
+      },
+    ],
+    
     isVerified: {
       type: Boolean,
       default: false,
     },
-    
+
     refreshToken: {
       type: String,
       select: false,

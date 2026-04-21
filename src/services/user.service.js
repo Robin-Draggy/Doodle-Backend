@@ -1,5 +1,5 @@
 import { User } from "../models/user.model.js"
-import { findUserByEmail, removeRefreshToken, updateRefreshToken, } from "../repositories/auth.repository.js";
+import { addAddress, findUserByEmail, findUserById, removeAddress, removeRefreshToken, updateRefreshToken, updateUser, } from "../repositories/user.repository.js";
 import { ApiError } from "../utils/ApiError.js"
 import { uploadOnCloudinary } from '../utils/Cloudinary.js'
 
@@ -54,7 +54,6 @@ export const registerUserService = async (data, file) => {
     return createdUser;
 }
 
-
 export const loginUserService = async (email, password) => {
     const user = await findUserByEmail(email);
 
@@ -75,7 +74,37 @@ export const loginUserService = async (email, password) => {
     return { user, accessToken, refreshToken}
 }
 
-
 export const logoutUserService = async (userId) => {
     await removeRefreshToken(userId)
+}
+
+export const getProfileService = async (userId) => {
+    const user = findUserById(userId)
+
+    if(!user){
+        throw new ApiError(404, "User not found")
+    }
+
+    return user;
+}
+
+export const updateProfileService = async (userId, data, file) => {
+    const updatedData = {...data}
+
+    if(file?.path){
+        const uploaded = await uploadOnCloudinary(file.path)
+        updatedData.avatar = uploaded.url;
+    }
+
+    const user = await updateUser(userId, updatedData)
+
+    return user;
+}
+
+export const addAddressService = async (userId, address) => {
+    return await addAddress(userId, address)
+}
+
+export const removeAddressService = async (userId, addressId) => {
+    return await removeAddress(userId, addressId)
 }

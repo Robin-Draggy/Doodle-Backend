@@ -1,12 +1,17 @@
 import {
+  addAddressService,
+  getProfileService,
   loginUserService,
   logoutUserService,
   registerUserService,
+  removeAddressService,
+  updateProfileService,
 } from '../services/user.service.js';
 import { AsyncHandler } from '../utils/AsyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import { cookieOptions } from '../utils/cookieOptions.js';
+import mongoose from 'mongoose';
 
 export const registerUser = AsyncHandler(async (req, res) => {
   const user = await registerUserService(req.body, req.file);
@@ -56,3 +61,75 @@ export const logoutUser = AsyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, 'Logout successful'));
 });
+
+export const getProfile = AsyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const user = await getProfileService(userId);
+
+  return res
+  .status(200)
+  .json(
+    new ApiResponse(
+      200,
+      user,
+      "Profile fetched successfully"
+    )
+  )
+})
+
+export const updateProfile = AsyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const data = req.body;
+  const file = req.file;
+
+  const user = await updateProfileService(userId, data, file)
+
+  return res
+  .status(200)
+  .json(
+    new ApiResponse(
+      200,
+      user,
+      "Profile updated successfully"
+    )
+  )
+})
+
+export const addAddress = AsyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const address = req.body;
+
+  const user = await addAddressService(userId, address)
+
+  return res
+  .status(200)
+  .json(
+    new ApiResponse(
+      200,
+      user,
+      "Address added successfully"
+    )
+  )
+})
+
+export const removeAddress = AsyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const addressId = req.params.addressId;
+
+  if (!mongoose.Types.ObjectId.isValid(addressId)) {
+  throw new ApiError(400, "Invalid address ID");
+}
+
+  const user = await removeAddressService(userId, addressId)
+
+  return res
+  .status(200)
+  .json(
+    new ApiResponse(
+      200,
+      user,
+      "Address removed successfully"
+    )
+  )
+})
