@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
+    "admin": "node src/scripts/createAdmin.js",
     "dev": "nodemon server.js",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",

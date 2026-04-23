@@ -13,7 +13,7 @@ router.route("/")
   .get(getProducts)
   .post(
     verify,
-    // authorize("admin"),
+    authorize("admin"),
     upload.array("images", 5),
     validate(createProductSchema),
     createProduct
@@ -23,13 +23,13 @@ router.route("/:productId")
   .get(getProductById)
   .put(
     verify,
-    // authorize("admin"),
+    authorize("admin"),
     upload.array("images", 5),
     validate(updateProductSchema),
     updateProduct
   )
   .delete(
     verify,
-    // authorize("admin"),
+    authorize("admin"),
     deleteProduct
   );

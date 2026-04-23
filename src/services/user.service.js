@@ -65,6 +65,7 @@ export const registerUserService = async (data, file) => {
     email,
     password,
     avatar: avatarUrl,
+    role: "user"
   });
 
   const token = user.generateEmailVerificationToken();
