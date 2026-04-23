@@ -53,9 +53,11 @@ app.get("/health", (req, res) => {
 
 // Routes
 import {router as userRoutes} from "./routes/user.routes.js";
+import {router as productRoutes} from "./routes/product.routes.js"
 import { ApiError } from "./utils/ApiError.js";
 
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/products", productRoutes);
 
 // Global error handler
 
