@@ -15,6 +15,7 @@ import { cookieOptions } from '../utils/cookieOptions.js';
 import mongoose from 'mongoose';
 import crypto from 'crypto';
 import { sendEmail } from '../utils/SendEmail.js';
+import { User } from '../models/user.model.js';
 
 export const registerUser = AsyncHandler(async (req, res) => {
   const user = await registerUserService(req.body, req.file);
@@ -51,6 +52,7 @@ export const verifyEmail = AsyncHandler(async (req, res) => {
 });
 
 export const forgotPassword = AsyncHandler(async (req, res) => {
+  console.log("req body", req.body)
   const { email } = req.body;
 
   const user = await User.findOne({ email });
@@ -62,7 +64,7 @@ export const forgotPassword = AsyncHandler(async (req, res) => {
   const token = user.generateResetPasswordToken();
   await user.save({ validateBeforeSave: false });
 
-  const resetUrl = `${process.env.BASE_URL}/api/v1/users/reset-password/${token}`;
+  const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
   await sendEmail({
     to: user.email,

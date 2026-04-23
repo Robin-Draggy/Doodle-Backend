@@ -22,6 +22,12 @@ const generateAccessAndRefereshTokens = async (userId) => {
   try {
     const user = await findUserById(userId);
 
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    console.log("user", user)
+
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
 
@@ -29,6 +35,7 @@ const generateAccessAndRefereshTokens = async (userId) => {
 
     return { accessToken, refreshToken };
   } catch (error) {
+    console.error("TOKEN ERROR:", error);
     throw new ApiError(500, "Error generating tokens");
   }
 };

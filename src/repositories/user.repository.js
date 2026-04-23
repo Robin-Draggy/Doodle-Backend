@@ -24,7 +24,7 @@ export const removeRefreshToken = (userId) => {
 }
 
 export const findUserById = (id) => {
-  return User.findById(id).select("-password -refreshToken").lean();
+  return User.findById(id).select("-password -refreshToken");
 };
 
 export const updateUser = (id, data) => {
