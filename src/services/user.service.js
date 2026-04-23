@@ -1,110 +1,168 @@
-import { User } from "../models/user.model.js"
-import { addAddress, findUserByEmail, findUserById, removeAddress, removeRefreshToken, updateRefreshToken, updateUser, } from "../repositories/user.repository.js";
-import { ApiError } from "../utils/ApiError.js"
-import { uploadOnCloudinary } from '../utils/Cloudinary.js'
+import { User } from "../models/user.model.js";
+import {
+  addAddress,
+  findUserByEmail,
+  findUserById,
+  removeAddress,
+  removeRefreshToken,
+  updateAddress,
+  updateRefreshToken,
+  updateUser,
+} from "../repositories/user.repository.js";
 
-const generateAccessAndRefereshTokens = async(userId) =>{
-    try {
-        const user = await User.findById(userId)
-        const accessToken = user.generateAccessToken()
-        const refreshToken = user.generateRefreshToken()
-
-        user.refreshToken = refreshToken
-        await user.save({ validateBeforeSave: false })
-
-        return {accessToken, refreshToken}
+import { ApiError } from "../utils/ApiError.js";
+import { uploadOnCloudinary } from "../utils/Cloudinary.js";
+import { redis } from "../utils/Redis.js";
+import { sendEmail } from "../utils/SendEmail.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 
-    } catch (error) {
-        throw new ApiError(500, "Something went wrong while generating referesh and access token")
-    }
-}
+
+const generateAccessAndRefereshTokens = async (userId) => {
+  try {
+    const user = await findUserById(userId);
+
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    await updateRefreshToken(userId, refreshToken);
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new ApiError(500, "Error generating tokens");
+  }
+};
+
 
 export const registerUserService = async (data, file) => {
-    const { username, email, password } = data;
+  const { username, email, password } = data;
 
-    if(!username || !email || !password ){
-        throw new ApiError(400, "All fields required")
-    }
+  if (!username || !email || !password) {
+    throw new ApiError(400, "All fields required");
+  }
 
-    // checking if user already exists or not
-    const existingUser = await User.findOne({ email });
+  const existingUser = await findUserByEmail(email);
+  if (existingUser) {
+    throw new ApiError(409, "User already exists");
+  }
 
-    if(existingUser){
-        throw new ApiError(409, "User already exists with this email")
-    }
+  let avatarUrl = "";
 
-    let avatarUrl = '';
+  if (file?.path) {
+    const uploaded = await uploadOnCloudinary(file.path);
+    avatarUrl = uploaded?.secure_url;
+  }
 
-    if(file?.path){
-        const uploaded = await uploadOnCloudinary(file.path);
-        avatarUrl = uploaded?.secure_url;
-    }
+  const user = await User.create({
+    username,
+    email,
+    password,
+    avatar: avatarUrl,
+  });
 
-    const user = await User.create({
-        username,
-        email,
-        password,
-        avatar : avatarUrl
-    })
+  const token = user.generateEmailVerificationToken();
+  await user.save({ validateBeforeSave: false });
 
-    // removing sensitive fields manually
-    const createdUser = await User.findById(user._id).select("-password -refreshToken");
+  const verifyUrl = `${process.env.BASE_URL}/api/v1/users/verify-email/${token}`;
 
-    return createdUser;
-}
+  await sendEmail({
+    to: user.email,
+    subject: "Verify your email",
+    text: `Click to verify: ${verifyUrl}`,
+  });
+
+  return await findUserById(user._id);
+};
+
 
 export const loginUserService = async (email, password) => {
-    const user = await findUserByEmail(email);
+  const user = await findUserByEmail(email);
 
-    if(!user){
-        throw new ApiError(401, "User not found")
-    }
+  if (!user) throw new ApiError(401, "User not found");
 
-    const isMatch = await user.isPasswordCorrect(password);
+  const isMatch = await user.isPasswordCorrect(password);
+  if (!isMatch) throw new ApiError(401, "Invalid credentials");
 
-    if(!isMatch){
-        throw new ApiError(401, "Invalid credential")
-    }
+  const { accessToken, refreshToken } =
+    await generateAccessAndRefereshTokens(user._id);
 
-    const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id)
+  return { user, accessToken, refreshToken };
+};
 
-    await updateRefreshToken(user._id, refreshToken);
-
-    return { user, accessToken, refreshToken}
-}
 
 export const logoutUserService = async (userId) => {
-    await removeRefreshToken(userId)
-}
+  await removeRefreshToken(userId);
+};
+
 
 export const getProfileService = async (userId) => {
-    const user = findUserById(userId)
+  const cacheKey = `user:profile:${userId}`;
 
-    if(!user){
-        throw new ApiError(404, "User not found")
-    }
+  const cachedUser = await redis.get(cacheKey);
+  if (cachedUser) return JSON.parse(cachedUser);
 
-    return user;
-}
+  const user = await findUserById(userId);
+
+  if (!user) throw new ApiError(404, "User not found");
+
+  await redis.set(cacheKey, JSON.stringify(user), "EX", 3600);
+
+  return user;
+};
+
 
 export const updateProfileService = async (userId, data, file) => {
-    const updatedData = {...data}
+  const updatedData = { ...data };
 
-    if(file?.path){
-        const uploaded = await uploadOnCloudinary(file.path)
-        updatedData.avatar = uploaded.url;
-    }
+  if (file?.path) {
+    const uploaded = await uploadOnCloudinary(file.path);
+    updatedData.avatar = uploaded.secure_url;
+  }
 
-    const user = await updateUser(userId, updatedData)
+  const user = await updateUser(userId, updatedData);
 
-    return user;
-}
+  await redis.del(`user:profile:${userId}`);
+
+  return user;
+};
+
 
 export const addAddressService = async (userId, address) => {
-    return await addAddress(userId, address)
-}
+  if (address.isDefault) {
+    await User.updateOne(
+      { _id: userId },
+      { $set: { "addresses.$[].isDefault": false } }
+    );
+  }
+
+  return await addAddress(userId, address);
+};
+
+
+export const updateAddressService = async (userId, addressId, data) => {
+  const user = await findUserById(userId);
+
+  const duplicate = user.addresses.some(
+    (addr) =>
+      addr.addressLine === data.addressLine &&
+      addr.city === data.city
+  );
+
+  if (duplicate) {
+    throw new ApiError(400, "Address already exists");
+  }
+
+  if (data.isDefault) {
+    await User.updateOne(
+      { _id: userId },
+      { $set: { "addresses.$[].isDefault": false } }
+    );
+  }
+
+  return await updateAddress(userId, addressId, data);
+};
+
 
 export const removeAddressService = async (userId, addressId) => {
-    return await removeAddress(userId, addressId)
-}
+  return await removeAddress(userId, addressId);
+};

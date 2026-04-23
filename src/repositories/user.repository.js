@@ -12,7 +12,7 @@ export const updateRefreshToken = (userId, token) => {
     return User.findByIdAndUpdate(
         userId,
         {refreshToken: token},
-        { new: true }
+        { returnDocument: "after" }
     )
 }
 
@@ -37,9 +37,19 @@ export const addAddress = (userId, address) => {
   return User.findByIdAndUpdate(
     userId,
     { $push: { addresses: address } },
-    { new: true }
+    { returnDocument: "after" }
   ).select("-password -refreshToken");
 };
+
+export const updateAddress = (userId, addressId, data) => {
+  return User.findOneAndUpdate(
+    {_id: userId, "addresses._id": addressId},
+    {$set: {
+      "addresses.$": {...data, _id: addressId}
+    }},
+    { returnDocument: "after" }
+  ).select("-password -refreshToken")
+}
 
 export const removeAddress = (userId, addressId) => {
   return User.findByIdAndUpdate(

@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 const userSchema = new mongoose.Schema(
   {
@@ -62,6 +63,22 @@ const userSchema = new mongoose.Schema(
       type: String,
       select: false,
     },
+
+    emailVerificationToken: {
+      type: String
+    },
+
+    emailVerificationExpiry: {
+      type: Date
+    },
+
+    resetPasswordToken: {
+      type: String
+    },
+
+    resetPasswordExpiry: {
+      type: Date
+    }
   },
   { timestamps: true }
 );
@@ -76,6 +93,39 @@ userSchema.pre('save', async function () {
 //   COMPARING PASSWORD
 userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
+};
+
+// EMAIL VERIFICATION
+userSchema.methods.generateEmailVerificationToken = function () {
+  // generate raw token
+  const token = crypto.randomBytes(32).toString("hex");
+
+  // hash token before saving (security)
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+
+  this.emailVerificationToken = hashedToken;
+
+  this.emailVerificationExpiry = Date.now() + 1000 * 60 * 60; // 1 hour
+
+  return token; // send this via email
+};
+
+// PASSWORD RESET TOKEN
+userSchema.methods.generateResetPasswordToken = function () {
+  const token = crypto.randomBytes(32).toString("hex");
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+
+  this.resetPasswordToken = hashedToken;
+  this.resetPasswordExpiry = Date.now() + 15 * 60 * 1000; // 15 min
+
+  return token;
 };
 
 // GENERATE ACCESS TOKEN
