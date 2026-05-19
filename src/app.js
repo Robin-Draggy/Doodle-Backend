@@ -5,7 +5,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 
-export const app = express();
+const app = express();
 
 // Security headers
 app.use(helmet());
@@ -77,3 +77,5 @@ app.use((err, req, res, next) => {
     message: err.message || "Internal Server Error",
   });
 });
+
+export default app
