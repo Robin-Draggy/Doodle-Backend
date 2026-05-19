@@ -1,9 +1,9 @@
-import express from "express";
-import cors from "cors";
-import cookieParser from "cookie-parser";
-import helmet from "helmet";
-import morgan from "morgan";
-import rateLimit from "express-rate-limit";
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 
 const app = express();
 
@@ -11,17 +11,24 @@ const app = express();
 app.use(helmet());
 
 // Logging
-app.use(morgan("dev"));
+app.use(morgan('dev'));
 
 // Rate limiting (basic)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
+  validate: {
+    trustProxy: false, 
+    forwardedHeader: false, 
+  },
+  keyGenerator: (req) => {
+    return req.ip || req.connection.remoteAddress;
+  },
 });
 app.use(limiter);
 
 // CORS
-const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [];
+const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [];
 
 app.use(
   cors({
@@ -29,7 +36,7 @@ app.use(
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        callback(new Error('Not allowed by CORS'));
       }
     },
     credentials: true,
@@ -37,32 +44,32 @@ app.use(
 );
 
 // Body parsers
-app.use(express.json({ limit: "16kb" }));
-app.use(express.urlencoded({ extended: true, limit: "16kb" }));
+app.use(express.json({ limit: '16kb' }));
+app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 
 // Cookies
 app.use(cookieParser());
 
 // Static files
-app.use(express.static("public"));
+app.use(express.static('public'));
 
 // Health check route (important in production)
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "OK" });
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK' });
 });
 
 // Routes
-import {router as userRoutes} from "./routes/user.routes.js";
-import {router as productRoutes} from "./routes/product.routes.js"
-import { ApiError } from "./utils/ApiError.js";
+import { router as userRoutes } from './routes/user.routes.js';
+import { router as productRoutes } from './routes/product.routes.js';
+import { ApiError } from './utils/ApiError.js';
 
-app.use("/api/v1/users", userRoutes);
-app.use("/api/v1/products", productRoutes);
+app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/products', productRoutes);
 
 // Global error handler
 
 app.use((err, req, res, next) => {
-  console.log("ERROR:", err);
+  console.log('ERROR:', err);
 
   if (res.headersSent) {
     return next(err);
@@ -74,8 +81,8 @@ app.use((err, req, res, next) => {
 
   res.status(500).json({
     success: false,
-    message: err.message || "Internal Server Error",
+    message: err.message || 'Internal Server Error',
   });
 });
 
-export default app
+export default app;
