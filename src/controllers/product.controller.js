@@ -9,7 +9,7 @@ import {
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { AsyncHandler } from '../utils/AsyncHandler.js';
-import { uploadOnCloudinary } from '../utils/Cloudinary.js';
+import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/Cloudinary.js';
 
 export const getProducts = AsyncHandler(async (req, res) => {
   const queryString = req.query;
@@ -64,33 +64,57 @@ export const updateProduct = AsyncHandler(async (req, res) => {
   const data = req.body;
   const files = req.files;
 
-  let imageUrls = [];
-
-  // 1. Upload new images if provided
-  if (files && files.length > 0) {
-    for (const file of files) {
-      const uploaded = await uploadOnCloudinary(file.path);
-      imageUrls.push(uploaded.secure_url);
-    }
-  }
-
-  // 2. Get existing product
   const existingProduct = await findProductByIdRepo(productId);
+
   if (!existingProduct) {
     throw new ApiError(404, "Product not found");
   }
 
-  // 3. Merge images (important)
-  let finalImages = existingProduct.images;
+  let imageUrls = [];
 
-  if (imageUrls.length > 0) {
-    finalImages = [...existingProduct.images, ...imageUrls];
+  // 1. Upload new images
+  if (files && files.length > 0) {
+    imageUrls = await Promise.all(
+      files.map(async (file) => {
+        const uploaded = await uploadOnCloudinary(file.path);
+        return uploaded.secure_url;
+      })
+    );
   }
 
-  // 4. Update product
+  // 2. REMOVE images from Cloudinary + DB
+  let updatedImages = existingProduct.images;
+
+  if (data.removeImages) {
+    let removeArray = [];
+
+    try {
+      removeArray =
+        typeof data.removeImages === "string"
+          ? JSON.parse(data.removeImages)
+          : data.removeImages;
+    } catch (e) {
+      removeArray = [];
+    }
+
+    for (const img of removeArray) {
+      await deleteFromCloudinary(img);
+    }
+
+    updatedImages = updatedImages.filter(
+      (img) => !removeArray.includes(img)
+    );
+  }
+
+  // 3. ADD new images
+  if (imageUrls.length > 0) {
+    updatedImages = [...updatedImages, ...imageUrls];
+  }
+
+  // 4. UPDATE PRODUCT
   const updatedProduct = await updateProductService(productId, {
     ...data,
-    images: finalImages
+    images: updatedImages,
   });
 
   res.status(200).json(
