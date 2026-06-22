@@ -39,24 +39,31 @@ export const createProduct = AsyncHandler(async (req, res) => {
   const data = req.body;
   const files = req.files;
 
-  let imageUrls = [];
+  let images = [];
 
   if (files && files.length > 0) {
     for (const file of files) {
-      const uploaded = await uploadOnCloudinary(file.path);
-      imageUrls.push(uploaded.secure_url);
+      const uploaded = await uploadOnCloudinary(file);
+
+      images.push({
+        url: uploaded.secure_url,
+        public_id: uploaded.public_id,
+      });
     }
   }
+
   const product = await createProductService({
     ...data,
-    images: imageUrls,
+    images,
   });
 
   if (!product) {
     throw new ApiError(400, 'Product fetch failed');
   }
 
-  res.status(201).json(new ApiResponse(201, product, 'Product created successfully'));
+  res.status(201).json(
+    new ApiResponse(201, product, 'Product created successfully')
+  );
 });
 
 export const updateProduct = AsyncHandler(async (req, res) => {
@@ -70,20 +77,22 @@ export const updateProduct = AsyncHandler(async (req, res) => {
     throw new ApiError(404, "Product not found");
   }
 
-  let imageUrls = [];
+  // 1. Upload new images (NEW SYSTEM)
+  let newImages = [];
 
-  // 1. Upload new images
   if (files && files.length > 0) {
-    imageUrls = await Promise.all(
-      files.map(async (file) => {
-        const uploaded = await uploadOnCloudinary(file.path);
-        return uploaded.secure_url;
-      })
+    const uploads = await Promise.all(
+      files.map(file => uploadOnCloudinary(file))
     );
+
+    newImages = uploads.map(u => ({
+      url: u.secure_url,
+      public_id: u.public_id,
+    }));
   }
 
-  // 2. REMOVE images from Cloudinary + DB
-  let updatedImages = existingProduct.images;
+  // 2. Handle removed images
+  let updatedImages = [...existingProduct.images];
 
   if (data.removeImages) {
     let removeArray = [];
@@ -97,21 +106,21 @@ export const updateProduct = AsyncHandler(async (req, res) => {
       removeArray = [];
     }
 
+    // remove from cloudinary
     for (const img of removeArray) {
-      await deleteFromCloudinary(img);
+      await deleteFromCloudinary(img.public_id);
     }
 
+    // remove from DB
     updatedImages = updatedImages.filter(
-      (img) => !removeArray.includes(img)
+      img => !removeArray.some(r => r.public_id === img.public_id)
     );
   }
 
-  // 3. ADD new images
-  if (imageUrls.length > 0) {
-    updatedImages = [...updatedImages, ...imageUrls];
-  }
+  // 3. Add new images
+  updatedImages = [...updatedImages, ...newImages];
 
-  // 4. UPDATE PRODUCT
+  // 4. Update product
   const updatedProduct = await updateProductService(productId, {
     ...data,
     images: updatedImages,

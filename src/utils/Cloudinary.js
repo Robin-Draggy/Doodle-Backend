@@ -2,50 +2,43 @@ import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
 import { ApiError } from './ApiError.js';
 
-export const uploadOnCloudinary = async (localFilePath) => {
+export const uploadOnCloudinary = async (file) => {
   try {
-    console.log('local path', localFilePath);
-    if (!localFilePath) return null;
+    if (!file) return null;
 
     cloudinary.config({
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
       api_key: process.env.CLOUDINARY_API_KEY,
       api_secret: process.env.CLOUDINARY_API_SECRET,
     });
-    //upload the file on cloudinary
-    const response = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: 'auto',
+
+    return await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { resource_type: 'auto' },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve({
+            url: result.secure_url,
+            public_id: result.public_id,
+          });
+        }
+      );
+
+      stream.end(file.buffer);
     });
-    fs.unlinkSync(localFilePath);
-    return response;
   } catch (error) {
-    console.error('CLOUDINARY ERROR:', error); // MUST log
-
-    if (fs.existsSync(localFilePath)) {
-      fs.unlinkSync(localFilePath);
-    }
-
+    console.error('CLOUDINARY ERROR:', error);
     throw new ApiError(500, 'Cloudinary upload failed');
   }
 };
 
-export const deleteFromCloudinary = async (imageUrl) => {
+export const deleteFromCloudinary = async (publicId) => {
   try {
-    if (!imageUrl) return;
+    if (!publicId) return;
 
-    // extract public_id from URL
-    const parts = imageUrl.split("/");
-    const fileWithExt = parts.pop();
-    const publicId = fileWithExt.split(".")[0];
-
-    const folder = parts.slice(parts.indexOf("upload") + 1).join("/");
-
-    const fullPublicId = folder ? `${folder}/${publicId}` : publicId;
-
-    await cloudinary.uploader.destroy(fullPublicId);
+    await cloudinary.uploader.destroy(publicId);
   } catch (error) {
     console.error("Cloudinary delete error:", error);
     throw new ApiError(500, "Failed to delete image from Cloudinary");
   }
 };
-
