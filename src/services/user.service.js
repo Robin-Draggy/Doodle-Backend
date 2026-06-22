@@ -12,11 +12,8 @@ import {
 
 import { ApiError } from "../utils/ApiError.js";
 import { uploadOnCloudinary } from "../utils/Cloudinary.js";
-import { redis } from "../utils/Redis.js";
 import { sendEmail } from "../utils/SendEmail.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-
-
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -25,8 +22,6 @@ const generateAccessAndRefereshTokens = async (userId) => {
     if (!user) {
       throw new ApiError(404, "User not found");
     }
-
-    console.log("user", user)
 
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
@@ -39,7 +34,6 @@ const generateAccessAndRefereshTokens = async (userId) => {
     throw new ApiError(500, "Error generating tokens");
   }
 };
-
 
 export const registerUserService = async (data, file) => {
   const { username, email, password } = data;
@@ -65,7 +59,7 @@ export const registerUserService = async (data, file) => {
     email,
     password,
     avatar: avatarUrl,
-    role: "user"
+    role: "user",
   });
 
   const token = user.generateEmailVerificationToken();
@@ -82,7 +76,6 @@ export const registerUserService = async (data, file) => {
   return await findUserById(user._id);
 };
 
-
 export const loginUserService = async (email, password) => {
   const user = await findUserByEmail(email);
 
@@ -97,27 +90,17 @@ export const loginUserService = async (email, password) => {
   return { user, accessToken, refreshToken };
 };
 
-
 export const logoutUserService = async (userId) => {
   await removeRefreshToken(userId);
 };
 
-
 export const getProfileService = async (userId) => {
-  const cacheKey = `user:profile:${userId}`;
-
-  const cachedUser = await redis.get(cacheKey);
-  if (cachedUser) return JSON.parse(cachedUser);
-
   const user = await findUserById(userId);
 
   if (!user) throw new ApiError(404, "User not found");
 
-  await redis.set(cacheKey, JSON.stringify(user), "EX", 3600);
-
   return user;
 };
-
 
 export const updateProfileService = async (userId, data, file) => {
   const updatedData = { ...data };
@@ -127,13 +110,8 @@ export const updateProfileService = async (userId, data, file) => {
     updatedData.avatar = uploaded.secure_url;
   }
 
-  const user = await updateUser(userId, updatedData);
-
-  await redis.del(`user:profile:${userId}`);
-
-  return user;
+  return await updateUser(userId, updatedData);
 };
-
 
 export const addAddressService = async (userId, address) => {
   if (address.isDefault) {
@@ -145,7 +123,6 @@ export const addAddressService = async (userId, address) => {
 
   return await addAddress(userId, address);
 };
-
 
 export const updateAddressService = async (userId, addressId, data) => {
   const user = await findUserById(userId);
@@ -169,7 +146,6 @@ export const updateAddressService = async (userId, addressId, data) => {
 
   return await updateAddress(userId, addressId, data);
 };
-
 
 export const removeAddressService = async (userId, addressId) => {
   return await removeAddress(userId, addressId);

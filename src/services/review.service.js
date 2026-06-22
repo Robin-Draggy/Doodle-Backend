@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import { Product } from "../models/product.model";
-import { redis } from "../utils/Redis";
 import { Review } from "../models/review.model";
 
 export const addReviewService = async (userId, productId, data) => {
@@ -12,7 +11,7 @@ export const addReviewService = async (userId, productId, data) => {
 
   // recalc ratings
   const stats = await Review.aggregate([
-    { $match: { product: new mongoose.Types.ObjectId(productId) }},
+    { $match: { product: new mongoose.Types.ObjectId(productId) } },
     {
       $group: {
         _id: "$product",
@@ -28,8 +27,6 @@ export const addReviewService = async (userId, productId, data) => {
       count: stats[0]?.count || 0
     }
   });
-
-  await redis.del(`product:${productId}`);
 
   return review;
 };
