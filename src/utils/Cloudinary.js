@@ -17,6 +17,7 @@ export const uploadOnCloudinary = async (file) => {
         { resource_type: 'auto' },
         (error, result) => {
           if (error) return reject(error);
+          console.log(result)
           resolve({
             url: result.secure_url,
             public_id: result.public_id,
