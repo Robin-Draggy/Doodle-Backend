@@ -14,17 +14,13 @@ app.use(helmet());
 app.use(morgan('dev'));
 
 // Rate limiting (basic)
+app.set('trust proxy', 1);
+
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  validate: {
-    trustProxy: false, 
-    forwardedHeader: false, 
-  },
-  keyGenerator: (req) => {
-    return req.ip || req.connection.remoteAddress;
-  },
 });
+
 app.use(limiter);
 
 // CORS
