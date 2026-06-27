@@ -13,3 +13,10 @@ export const createProductRepo = (data) => Product.create(data);
 export const saveProductRepo = (product) => product.save();
 
 export const deleteProductRepo = (productId) => Product.findByIdAndDelete(productId);
+
+export const countProductsInCategoryRepo = (categoryId) => {
+    return Product.countDocuments({
+        category: categoryId,
+        status: "published",
+    });
+};

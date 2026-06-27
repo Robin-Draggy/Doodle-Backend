@@ -16,6 +16,8 @@ import { MAX_IMAGE_UPLOAD } from '../config/constants.js';
 
 export const router = Router();
 
+// PRODUCT ROUTES
+
 router
   .route('/')
   .get(getProducts)
@@ -26,6 +28,8 @@ router
     validate(createProductSchema),
     createProduct
   );
+
+  // PRODUCT BY ID
 
 router
   .route('/:productId')
