@@ -59,11 +59,13 @@ import { router as userRoutes } from './routes/user.routes.js';
 import { router as productRoutes } from './routes/product.routes.js';
 import { router as categoryRoutes } from './routes/category.routes.js';
 import { router as reviewRoutes } from './routes/review.routes.js';
+import { router as wishlistRoutes } from './routes/wishlist.routes.js';
 import { ApiError } from './utils/ApiError.js';
 
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/categories', categoryRoutes);
+app.use('/api/v1/wishlist', wishlistRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 
 // Global error handler
