@@ -6,6 +6,7 @@ import { ApiError } from "../utils/ApiError.js";
 import {
   aggregateProductRatingsRepo,
   findReviewByUserAndProductRepo,
+  updateReviewStatusRepo,
 } from "../repositories/review.repository.js";
 
 // Update Product Ratings
@@ -175,6 +176,24 @@ export const deleteReviewService = async (
   await review.deleteOne();
 
   await updateProductRatings(productId);
+
+  return review;
+};
+
+// Update Review Status
+
+export const updateReviewStatusService = async (
+  reviewId,
+  status
+) => {
+  const review = await updateReviewStatusRepo(
+    reviewId,
+    status
+  );
+
+  if (!review) {
+    throw new ApiError(404, "Review not found.");
+  }
 
   return review;
 };

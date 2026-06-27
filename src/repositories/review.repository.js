@@ -84,6 +84,23 @@ export const deleteReviewRepo = (reviewId) => {
   return Review.findByIdAndDelete(reviewId);
 };
 
+// Update Review Status
+
+export const updateReviewStatusRepo = (
+  reviewId,
+  status
+) => {
+  return Review.findByIdAndUpdate(
+    reviewId,
+    { status },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+};
+
+
 // Aggregate Product Ratings
 
 export const aggregateProductRatingsRepo = (productId) => {

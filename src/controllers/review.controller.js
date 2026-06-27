@@ -4,6 +4,7 @@ import {
   getReviewByIdService,
   getReviewService,
   updateReviewService,
+  updateReviewStatusService,
 } from "../services/review.service.js";
 
 import { AsyncHandler } from "../utils/AsyncHandler.js";
@@ -15,6 +16,7 @@ import {
 } from "../utils/cloudinaryFiles.js";
 
 import { PARSE_JSON_FIELD } from "../config/constants.js";
+
 
 // GET REVIEWS
 
@@ -108,6 +110,30 @@ export const deleteReview = AsyncHandler(async (req, res) => {
       200,
       null,
       "Review deleted successfully."
+    )
+  );
+});
+
+// Update Review Status (Admin Only)
+
+export const updateReviewStatus = AsyncHandler(async (req, res) => {
+  const { reviewId } = req.params;
+  const { status } = req.body;
+
+  if (!["published", "hidden"].includes(status)) {
+    throw new ApiError(400, "Invalid review status.");
+  }
+
+  const review = await updateReviewStatusService(
+    reviewId,
+    status
+  );
+
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      review,
+      `Review ${status} successfully.`
     )
   );
 });

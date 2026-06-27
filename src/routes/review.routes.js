@@ -6,6 +6,7 @@ import {
   getReviewById,
   getReviews,
   updateReview,
+  updateReviewStatus,
 } from "../controllers/review.controller.js";
 
 import { verify } from "../middlewares/auth.middleware.js";
@@ -64,5 +65,5 @@ router.patch(
   verify,
   authorize("admin"),
   validateObjectId("reviewId"),
-  async (req, res) => {}
+  updateReviewStatus
 );
