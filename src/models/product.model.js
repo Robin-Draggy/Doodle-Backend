@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import slugify from "slugify";
+import crypto from 'crypto';
 
 const specificationSchema = new mongoose.Schema(
   {
