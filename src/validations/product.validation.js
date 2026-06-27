@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PRODUCT_STATUS } from "../config/constants";
+import { PRODUCT_STATUS } from "../config/constants.js";
 
 const specificationSchema = z.object({
   key: z.string().trim().min(1, "Specification key is required"),
