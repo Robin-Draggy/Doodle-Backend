@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { REVIEW_STATUS } from "../utils/constants.js";
+import { REVIEW_STATUS } from "../config/constants.js";
 
 // Create Review
 
