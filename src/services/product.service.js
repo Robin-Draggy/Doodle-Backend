@@ -55,6 +55,24 @@ export const updateProductService = async (
     throw new ApiError(404, "Product not found");
   }
 
+  // Determine the final values after the update
+  const finalPrice = data.price ?? product.price;
+  const finalDiscountPrice =
+    data.discountPrice ?? product.discountPrice;
+
+  // Business validation
+  if (
+    finalDiscountPrice !== null &&
+    finalDiscountPrice !== undefined &&
+    finalDiscountPrice >= finalPrice
+  ) {
+    throw new ApiError(
+      400,
+      "Discount price must be less than the original price."
+    );
+  }
+
+  // Remove deleted images
   if (removeImages.length) {
     product.images = product.images.filter(
       (image) =>
@@ -64,14 +82,15 @@ export const updateProductService = async (
     );
   }
 
+  // Add newly uploaded images
   if (uploadedImages.length) {
     product.images.push(...uploadedImages);
   }
 
-  Object.keys(data).forEach((key) => {
-    product[key] = data[key];
-  });
+  // Merge incoming fields
+  Object.assign(product, data);
 
+  // Trigger validation + middleware
   await product.save();
 
   return product;
