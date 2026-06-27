@@ -82,6 +82,7 @@ export const createProduct = AsyncHandler(async (req, res) => {
       };
     })
   );
+  console.log(req.body);
 
   const product = await createProductService({
     ...data,

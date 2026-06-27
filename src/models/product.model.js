@@ -185,6 +185,22 @@ productSchema.index({
   createdAt: -1,
 });
 
+productSchema.set("toJSON", {
+  versionKey: false,
+  transform(doc, ret) {
+    delete ret.__v;
+    return ret;
+  },
+});
+
+productSchema.set("toObject", {
+  versionKey: false,
+  transform(doc, ret) {
+    delete ret.__v;
+    return ret;
+  },
+});
+
 /* ===========================
    Middleware
 =========================== */
