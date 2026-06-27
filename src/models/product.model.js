@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import slugify from "slugify";
-import crypto from 'crypto';
+import crypto from "crypto";
 
 const specificationSchema = new mongoose.Schema(
   {
@@ -149,53 +149,48 @@ const productSchema = new mongoose.Schema(
   }
 );
 
-/**
- * ===========================
- * Indexes
- * ===========================
- */
+/* ===========================
+   Indexes
+=========================== */
 
-// Full-text search
 productSchema.index({
   title: "text",
   description: "text",
   brand: "text",
 });
 
-// Category page
 productSchema.index({
   category: 1,
   status: 1,
 });
 
-// Homepage featured products
 productSchema.index({
   isFeatured: 1,
   status: 1,
 });
 
-// Price filtering
 productSchema.index({
   price: 1,
 });
 
-// Brand filtering
 productSchema.index({
   brand: 1,
 });
 
-// Best sellers
 productSchema.index({
   soldCount: -1,
 });
 
-// New arrivals
 productSchema.index({
   createdAt: -1,
 });
 
-productSchema.pre("validate", function (next) {
-  // Slug
+/* ===========================
+   Middleware
+=========================== */
+
+productSchema.pre("validate", function () {
+  // Generate slug only when title changes
   if (this.isModified("title")) {
     const baseSlug = slugify(this.title, {
       lower: true,
@@ -206,28 +201,29 @@ productSchema.pre("validate", function (next) {
     this.slug = `${baseSlug}-${crypto.randomBytes(2).toString("hex")}`;
   }
 
-  // SKU
+  // Generate SKU once
   if (!this.sku) {
     this.sku = `PRD-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
   }
 
-  // Discount
+  // Validate discount
   if (
-    this.discountPrice !== null &&
-    this.discountPrice !== undefined &&
+    this.discountPrice != null &&
     this.discountPrice >= this.price
   ) {
-    return next(
-      new Error("Discount price must be less than original price.")
+    throw new Error(
+      "Discount price must be less than original price."
     );
   }
 
-  // Tags
+  // Remove duplicate tags
   if (this.tags?.length) {
-    this.tags = [...new Set(this.tags.map((tag) => tag.trim().toLowerCase()))];
+    this.tags = [
+      ...new Set(
+        this.tags.map((tag) => tag.trim().toLowerCase())
+      ),
+    ];
   }
-
-  next();
 });
 
 export const Product = mongoose.model("Product", productSchema);
