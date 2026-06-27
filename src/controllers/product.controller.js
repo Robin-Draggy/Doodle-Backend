@@ -1,3 +1,4 @@
+import { PARSE_JSON_FIELD } from "../config/constants.js";
 import { findProductByIdLeanRepo } from "../repositories/product.repository.js";
 import {
   createProductService,
@@ -15,29 +16,8 @@ import {
 } from "../utils/Cloudinary.js";
 import { deleteImages, rollbackUploadedImages, uploadImages } from "../utils/cloudinaryFiles.js";
 
-/**
- * Safely parse JSON fields coming from multipart/form-data.
- */
 
-const parseJsonField = (field) => {
-  if (field === undefined || field === null || field === "") {
-    return undefined;
-  }
-
-  if (typeof field === "string") {
-    try {
-      return JSON.parse(field);
-    } catch {
-      throw new ApiError(400, "Invalid JSON format.");
-    }
-  }
-
-  return field;
-};
-
-// =========================
 // GET ALL PRODUCTS
-// =========================
 
 export const getProducts = AsyncHandler(async (req, res) => {
   const products = await getProductService(req.query);
@@ -47,9 +27,7 @@ export const getProducts = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, products, "Products fetched successfully"));
 });
 
-// =========================
-// GET SINGLE PRODUCT
-// =========================
+// GET PRODUCT BY ID
 
 export const getProductById = AsyncHandler(async (req, res) => {
   const product = await getProductByIdService(req.params.productId);
@@ -59,17 +37,15 @@ export const getProductById = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, product, "Product fetched successfully"));
 });
 
-// =========================
 // CREATE PRODUCT
-// =========================
 
 export const createProduct = AsyncHandler(async (req, res) => {
   const files = req.files || [];
 
   const data = {
     ...req.body,
-    tags: parseJsonField(req.body.tags),
-    specifications: parseJsonField(req.body.specifications),
+    tags: PARSE_JSON_FIELD(req.body.tags),
+    specifications: PARSE_JSON_FIELD(req.body.specifications),
   };
 
   const images = await Promise.all(
@@ -94,9 +70,7 @@ export const createProduct = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(201, product, "Product created successfully"));
 });
 
-// =========================
 // UPDATE PRODUCT
-// =========================
 
 export const updateProduct = AsyncHandler(async (req, res) => {
   const { productId } = req.params;
@@ -104,9 +78,9 @@ export const updateProduct = AsyncHandler(async (req, res) => {
 
   const data = {
     ...req.body,
-    tags: parseJsonField(req.body.tags),
-    specifications: parseJsonField(req.body.specifications),
-    removeImages: parseJsonField(req.body.removeImages),
+    tags: PARSE_JSON_FIELD(req.body.tags),
+    specifications: PARSE_JSON_FIELD(req.body.specifications),
+    removeImages: PARSE_JSON_FIELD(req.body.removeImages),
   };
 
   const removeImages = data.removeImages || [];
@@ -145,9 +119,7 @@ export const updateProduct = AsyncHandler(async (req, res) => {
   }
 });
 
-// =========================
 // DELETE PRODUCT
-// =========================
 
 export const deleteProduct = AsyncHandler(async (req, res) => {
   await deleteProductService(req.params.productId);

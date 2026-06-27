@@ -14,8 +14,8 @@ import {
   uploadImages,
   rollbackUploadedImages,
   deleteImages,
-  parseJsonField,
-} from "../utils/constants.js";
+} from "../utils/cloudinaryFiles.js";
+import { PARSE_JSON_FIELD } from "../config/constants.js";
 
 // GET ALL CATEGORIES
 
@@ -56,7 +56,7 @@ export const createCategory = AsyncHandler(async (req, res) => {
 
   const data = {
     ...req.body,
-    seo: parseJsonField(req.body.seo),
+    seo: PARSE_JSON_FIELD(req.body.seo),
   };
 
   let uploadedImage = null;
@@ -96,7 +96,7 @@ export const updateCategory = AsyncHandler(async (req, res) => {
 
   const data = {
     ...req.body,
-    seo: parseJsonField(req.body.seo),
+    seo: PARSE_JSON_FIELD(req.body.seo),
   };
 
   let uploadedImage = null;
