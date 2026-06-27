@@ -37,22 +37,21 @@ export const getProductById = AsyncHandler(async (req, res) => {
 
 export const createProduct = AsyncHandler(async (req, res) => {
   const data = req.body;
-  const files = req.files;
-
-  console.log(data)
-  console.log(files)
+  const files = req.files || [];
 
   let images = [];
 
-  if (files && files.length > 0) {
-    for (const file of files) {
-      const uploaded = await uploadOnCloudinary(file);
-      console.log("file", file)
-      images.push({
-        url: uploaded.secure_url,
-        public_id: uploaded.public_id,
-      });
-    }
+  if (files.length > 0) {
+    images = await Promise.all(
+      files.map(async (file) => {
+        const uploaded = await uploadOnCloudinary(file);
+
+        return {
+          url: uploaded.url,
+          public_id: uploaded.public_id,
+        };
+      })
+    );
   }
 
   const product = await createProductService({
@@ -60,19 +59,15 @@ export const createProduct = AsyncHandler(async (req, res) => {
     images,
   });
 
-  if (!product) {
-    throw new ApiError(400, 'Product fetch failed');
-  }
-
   res.status(201).json(
-    new ApiResponse(201, product, 'Product created successfully')
+    new ApiResponse(201, product, "Product created successfully")
   );
 });
 
 export const updateProduct = AsyncHandler(async (req, res) => {
-  const productId = req.params.productId;
+  const { productId } = req.params;
   const data = req.body;
-  const files = req.files;
+  const files = req.files || [];
 
   const existingProduct = await findProductByIdRepo(productId);
 
@@ -80,50 +75,53 @@ export const updateProduct = AsyncHandler(async (req, res) => {
     throw new ApiError(404, "Product not found");
   }
 
-  // 1. Upload new images (NEW SYSTEM)
+  // Upload newly added images
   let newImages = [];
 
-  if (files && files.length > 0) {
+  if (files.length > 0) {
     const uploads = await Promise.all(
-      files.map(file => uploadOnCloudinary(file))
+      files.map((file) => uploadOnCloudinary(file))
     );
 
-    newImages = uploads.map(u => ({
-      url: u.secure_url,
-      public_id: u.public_id,
+    newImages = uploads.map((image) => ({
+      url: image.url,
+      public_id: image.public_id,
     }));
   }
 
-  // 2. Handle removed images
+  // Existing images
   let updatedImages = [...existingProduct.images];
 
+  // Images to remove
   if (data.removeImages) {
-    let removeArray = [];
+    let removeImages = [];
 
     try {
-      removeArray =
+      removeImages =
         typeof data.removeImages === "string"
           ? JSON.parse(data.removeImages)
           : data.removeImages;
-    } catch (e) {
-      removeArray = [];
+    } catch {
+      throw new ApiError(400, "Invalid removeImages format");
     }
 
-    // remove from cloudinary
-    for (const img of removeArray) {
-      await deleteFromCloudinary(img.public_id);
-    }
+    await Promise.all(
+      removeImages.map((img) =>
+        deleteFromCloudinary(img.public_id)
+      )
+    );
 
-    // remove from DB
     updatedImages = updatedImages.filter(
-      img => !removeArray.some(r => r.public_id === img.public_id)
+      (img) =>
+        !removeImages.some(
+          (removed) => removed.public_id === img.public_id
+        )
     );
   }
 
-  // 3. Add new images
-  updatedImages = [...updatedImages, ...newImages];
+  // Merge images
+  updatedImages.push(...newImages);
 
-  // 4. Update product
   const updatedProduct = await updateProductService(productId, {
     ...data,
     images: updatedImages,
