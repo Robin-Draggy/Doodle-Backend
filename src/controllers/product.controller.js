@@ -1,141 +1,157 @@
-import { findProductByIdRepo } from '../repositories/product.repository.js';
+import { findProductByIdLeanRepo } from "../repositories/product.repository.js";
 import {
   createProductService,
   deleteProductService,
   getProductByIdService,
   getProductService,
   updateProductService,
-} from '../services/product.service.js';
-import { ApiError } from '../utils/ApiError.js';
-import { ApiResponse } from '../utils/ApiResponse.js';
-import { AsyncHandler } from '../utils/AsyncHandler.js';
-import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/Cloudinary.js';
+} from "../services/product.service.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { AsyncHandler } from "../utils/AsyncHandler.js";
+import {
+  deleteFromCloudinary,
+  uploadOnCloudinary,
+} from "../utils/Cloudinary.js";
+import { deleteImages, rollbackUploadedImages, uploadImages } from "../utils/cloudinaryFiles.js";
+
+/**
+ * Safely parse JSON fields coming from multipart/form-data.
+ */
+
+const parseJsonField = (field) => {
+  if (field === undefined || field === null || field === "") {
+    return undefined;
+  }
+
+  if (typeof field === "string") {
+    try {
+      return JSON.parse(field);
+    } catch {
+      throw new ApiError(400, "Invalid JSON format.");
+    }
+  }
+
+  return field;
+};
+
+// =========================
+// GET ALL PRODUCTS
+// =========================
 
 export const getProducts = AsyncHandler(async (req, res) => {
-  const queryString = req.query;
+  const products = await getProductService(req.query);
 
-  const products = await getProductService(queryString);
-
-  if (!products) {
-    throw new ApiError(400, 'Products fetch failed');
-  }
-
-  res.status(200).json(new ApiResponse(200, products, 'Products fetched successfully'));
+  res
+    .status(200)
+    .json(new ApiResponse(200, products, "Products fetched successfully"));
 });
+
+// =========================
+// GET SINGLE PRODUCT
+// =========================
 
 export const getProductById = AsyncHandler(async (req, res) => {
-  const productId = req.params.productId;
+  const product = await getProductByIdService(req.params.productId);
 
-  const product = await getProductByIdService(productId);
-
-  if (!product) {
-    throw new ApiError(400, 'Product fetch failed');
-  }
-
-  res.status(200).json(new ApiResponse(200, product, 'Product fetched successfully'));
+  res
+    .status(200)
+    .json(new ApiResponse(200, product, "Product fetched successfully"));
 });
 
+// =========================
+// CREATE PRODUCT
+// =========================
+
 export const createProduct = AsyncHandler(async (req, res) => {
-  const data = req.body;
   const files = req.files || [];
 
-  let images = [];
+  const data = {
+    ...req.body,
+    tags: parseJsonField(req.body.tags),
+    specifications: parseJsonField(req.body.specifications),
+  };
 
-  if (files.length > 0) {
-    images = await Promise.all(
-      files.map(async (file) => {
-        const uploaded = await uploadOnCloudinary(file);
+  const images = await Promise.all(
+    files.map(async (file) => {
+      const uploaded = await uploadOnCloudinary(file);
 
-        return {
-          url: uploaded.url,
-          public_id: uploaded.public_id,
-        };
-      })
-    );
-  }
+      return {
+        url: uploaded.url,
+        public_id: uploaded.public_id,
+      };
+    })
+  );
 
   const product = await createProductService({
     ...data,
     images,
   });
 
-  res.status(201).json(
-    new ApiResponse(201, product, "Product created successfully")
-  );
+  res
+    .status(201)
+    .json(new ApiResponse(201, product, "Product created successfully"));
 });
+
+// =========================
+// UPDATE PRODUCT
+// =========================
 
 export const updateProduct = AsyncHandler(async (req, res) => {
   const { productId } = req.params;
-  const data = req.body;
   const files = req.files || [];
 
-  const existingProduct = await findProductByIdRepo(productId);
+  const data = {
+    ...req.body,
+    tags: parseJsonField(req.body.tags),
+    specifications: parseJsonField(req.body.specifications),
+    removeImages: parseJsonField(req.body.removeImages),
+  };
 
-  if (!existingProduct) {
-    throw new ApiError(404, "Product not found");
-  }
+  const removeImages = data.removeImages || [];
+  delete data.removeImages;
 
-  // Upload newly added images
-  let newImages = [];
+  let uploadedImages = [];
 
-  if (files.length > 0) {
-    const uploads = await Promise.all(
-      files.map((file) => uploadOnCloudinary(file))
+  try {
+    // Upload new images
+    uploadedImages = await uploadImages(files);
+
+    // Update database
+    const updatedProduct = await updateProductService(
+      productId,
+      data,
+      {
+        uploadedImages,
+        removeImages,
+      }
     );
 
-    newImages = uploads.map((image) => ({
-      url: image.url,
-      public_id: image.public_id,
-    }));
-  }
+    // Delete old Cloudinary images only after DB update succeeds
+    await deleteImages(removeImages);
 
-  // Existing images
-  let updatedImages = [...existingProduct.images];
-
-  // Images to remove
-  if (data.removeImages) {
-    let removeImages = [];
-
-    try {
-      removeImages =
-        typeof data.removeImages === "string"
-          ? JSON.parse(data.removeImages)
-          : data.removeImages;
-    } catch {
-      throw new ApiError(400, "Invalid removeImages format");
-    }
-
-    await Promise.all(
-      removeImages.map((img) =>
-        deleteFromCloudinary(img.public_id)
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        updatedProduct,
+        "Product updated successfully"
       )
     );
-
-    updatedImages = updatedImages.filter(
-      (img) =>
-        !removeImages.some(
-          (removed) => removed.public_id === img.public_id
-        )
-    );
+  } catch (error) {
+    // Rollback newly uploaded images
+    await rollbackUploadedImages(uploadedImages);
+    throw error;
   }
-
-  // Merge images
-  updatedImages.push(...newImages);
-
-  const updatedProduct = await updateProductService(productId, {
-    ...data,
-    images: updatedImages,
-  });
-
-  res.status(200).json(
-    new ApiResponse(200, updatedProduct, "Product updated successfully")
-  );
 });
 
+// =========================
+// DELETE PRODUCT
+// =========================
+
 export const deleteProduct = AsyncHandler(async (req, res) => {
-  const productId = req.params.productId;
+  await deleteProductService(req.params.productId);
 
-  await deleteProductService(productId);
-
-  res.status(200).json(new ApiResponse(200, null, 'Product deleted successfully'));
+  res
+    .status(200)
+    .json(new ApiResponse(200, null, "Product deleted successfully"));
 });

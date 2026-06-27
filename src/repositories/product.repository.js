@@ -1,10 +1,15 @@
-import { Product } from "../models/product.model.js";
+import { Product } from '../models/product.model.js';
 
-export const createProductRepo = (data) => Product.create(data, {runValidators: true});
+export const findProductsRepo = (query) => query.lean();
 
-export const findProductByIdRepo = (productId) => Product.findById(productId).lean();
+export const countProductsRepo = (query) => query.countDocuments();
 
-export const updateProductRepo = (productId, data) => Product.findByIdAndUpdate(productId, data, { new: true, runValidators: true });
+export const findProductByIdRepo = (productId) => Product.findById(productId);
 
+export const findProductByIdLeanRepo = (productId) => Product.findById(productId).lean();
 
-export const deleteProductRepo = (productId) => Product.findByIdAndDelete(productId)
+export const createProductRepo = (data) => Product.create(data);
+
+export const saveProductRepo = (product) => product.save();
+
+export const deleteProductRepo = (productId) => Product.findByIdAndDelete(productId);

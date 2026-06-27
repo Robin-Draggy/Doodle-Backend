@@ -6,9 +6,7 @@ import { ApiError } from '../utils/ApiError.js';
 export const getProductService = async (queryString) => {
   const baseQuery = Product.find();
 
-  const features = new ApiFeatures(baseQuery, queryString)
-    .filter()
-    .search();
+  const features = new ApiFeatures(baseQuery, queryString).filter().search();
 
   const total = await features.query.clone().countDocuments();
 
@@ -16,8 +14,8 @@ export const getProductService = async (queryString) => {
 
   const products = await features.query.lean();
 
-  const page = parseInt(queryString.page) || 1;
-  const limit = parseInt(queryString.limit) || 10;
+  const page = Number(queryString.page) || 1;
+  const limit = Number(queryString.limit) || 10;
 
   return {
     data: products,
@@ -42,20 +40,39 @@ export const getProductByIdService = async (productId) => {
 
 // CREATE PRODUCT
 export const createProductService = async (data) => {
-  const product = await Product.create(data);
-  return product;
+  return await Product.create(data);
 };
 
 // UPDATE PRODUCT
-export const updateProductService = async (productId, data) => {
-  const product = await Product.findByIdAndUpdate(productId, data, {
-    new: true,
-    runValidators: true,
-  });
+export const updateProductService = async (
+  productId,
+  data,
+  { uploadedImages = [], removeImages = [] } = {}
+) => {
+  const product = await Product.findById(productId);
 
   if (!product) {
-    throw new ApiError(404, 'Product not found');
+    throw new ApiError(404, "Product not found");
   }
+
+  if (removeImages.length) {
+    product.images = product.images.filter(
+      (image) =>
+        !removeImages.some(
+          (removed) => removed.public_id === image.public_id
+        )
+    );
+  }
+
+  if (uploadedImages.length) {
+    product.images.push(...uploadedImages);
+  }
+
+  Object.keys(data).forEach((key) => {
+    product[key] = data[key];
+  });
+
+  await product.save();
 
   return product;
 };
