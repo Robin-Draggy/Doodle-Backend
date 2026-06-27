@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
-import slugify from "slugify";
-import crypto from "crypto";
+import mongoose from 'mongoose';
+import slugify from 'slugify';
+import crypto from 'crypto';
 
 const specificationSchema = new mongoose.Schema(
   {
@@ -62,13 +62,13 @@ const productSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true,
-      default: "",
+      default: '',
     },
 
     brand: {
       type: String,
       trim: true,
-      default: "",
+      default: '',
     },
 
     category: {
@@ -109,8 +109,8 @@ const productSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["draft", "published", "archived"],
-      default: "draft",
+      enum: ['draft', 'published', 'archived'],
+      default: 'draft',
     },
 
     isFeatured: {
@@ -134,13 +134,17 @@ const productSchema = new mongoose.Schema(
       average: {
         type: Number,
         default: 0,
-        min: 0,
-        max: 5,
       },
       count: {
         type: Number,
         default: 0,
-        min: 0,
+      },
+      breakdown: {
+        oneStar: { type: Number, default: 0 },
+        twoStar: { type: Number, default: 0 },
+        threeStar: { type: Number, default: 0 },
+        fourStar: { type: Number, default: 0 },
+        fiveStar: { type: Number, default: 0 },
       },
     },
   },
@@ -154,9 +158,9 @@ const productSchema = new mongoose.Schema(
 =========================== */
 
 productSchema.index({
-  title: "text",
-  description: "text",
-  brand: "text",
+  title: 'text',
+  description: 'text',
+  brand: 'text',
 });
 
 productSchema.index({
@@ -185,7 +189,7 @@ productSchema.index({
   createdAt: -1,
 });
 
-productSchema.set("toJSON", {
+productSchema.set('toJSON', {
   versionKey: false,
   transform(doc, ret) {
     delete ret.__v;
@@ -193,7 +197,7 @@ productSchema.set("toJSON", {
   },
 });
 
-productSchema.set("toObject", {
+productSchema.set('toObject', {
   versionKey: false,
   transform(doc, ret) {
     delete ret.__v;
@@ -205,41 +209,32 @@ productSchema.set("toObject", {
    Middleware
 =========================== */
 
-productSchema.pre("validate", function () {
+productSchema.pre('validate', function () {
   // Generate slug only when title changes
-  if (this.isModified("title")) {
+  if (this.isModified('title')) {
     const baseSlug = slugify(this.title, {
       lower: true,
       strict: true,
       trim: true,
     });
 
-    this.slug = `${baseSlug}-${crypto.randomBytes(2).toString("hex")}`;
+    this.slug = `${baseSlug}-${crypto.randomBytes(2).toString('hex')}`;
   }
 
   // Generate SKU once
   if (!this.sku) {
-    this.sku = `PRD-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+    this.sku = `PRD-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
   }
 
   // Validate discount
-  if (
-    this.discountPrice != null &&
-    this.discountPrice >= this.price
-  ) {
-    throw new Error(
-      "Discount price must be less than original price."
-    );
+  if (this.discountPrice != null && this.discountPrice >= this.price) {
+    throw new Error('Discount price must be less than original price.');
   }
 
   // Remove duplicate tags
   if (this.tags?.length) {
-    this.tags = [
-      ...new Set(
-        this.tags.map((tag) => tag.trim().toLowerCase())
-      ),
-    ];
+    this.tags = [...new Set(this.tags.map((tag) => tag.trim().toLowerCase()))];
   }
 });
 
-export const Product = mongoose.model("Product", productSchema);
+export const Product = mongoose.model('Product', productSchema);
