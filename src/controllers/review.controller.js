@@ -14,7 +14,7 @@ import {
   rollbackUploadedImages,
 } from "../utils/cloudinaryFiles.js";
 
-import { PARSE_JSON_FIELD } from "../utils/constants.js";
+import { PARSE_JSON_FIELD } from "../config/constants.js";
 
 // GET REVIEWS
 
