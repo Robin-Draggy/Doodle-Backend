@@ -12,12 +12,12 @@ import { verify } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/role.check.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { validate } from "../middlewares/validation.middleware.js";
-import { validateObjectId } from "../middlewares/objectId.middleware.js";
 
 import {
   createCategorySchema,
   updateCategorySchema,
 } from "../validations/category.validation.js";
+import { validateObjectId } from "../middlewares/validateObjectId.middleware.js";
 
 export const router = Router();
 
