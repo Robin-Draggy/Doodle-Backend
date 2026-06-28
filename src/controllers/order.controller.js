@@ -15,6 +15,7 @@ import { AsyncHandler } from "../utils/AsyncHandler.js";
 
 export const createOrder = AsyncHandler(
   async (req, res) => {
+    console.log("Validated Data:", req.validatedData); // Debugging line
     const order = await createOrderService({
       userId: req.user._id,
       ...req.validatedData,

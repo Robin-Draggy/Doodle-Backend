@@ -75,16 +75,11 @@ export const countUserAddressesRepo = (userId) => {
   });
 };
 
-
-
-export const findUserAddressByIdRepo = async (
-  userId,
-  addressId
-) => {
-
-  const address = await Address.findById(addressId);
-
-  console.log(address);
-
-  return address;
+export const findUserAddressByIdRepo = (userId, addressId) => {
+  console.log('userId and addressId on repo', userId, addressId);
+  return Address.findOne({
+    _id: addressId,
+    user: userId,
+  });
 };
+

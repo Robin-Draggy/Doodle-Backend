@@ -69,6 +69,8 @@ export const createOrderService = async ({
       }
     }
 
+    console.log('userId and addressId', userId, addressId);
+
     // Loading Shipping Address
     const address = await findUserAddressByIdRepo(userId, addressId);
 
