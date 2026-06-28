@@ -70,7 +70,7 @@ export const createOrderService = async ({
     }
 
     // Loading Shipping Address
-    const address = await findUserAddressByIdRepo(addressId, userId);
+    const address = await findUserAddressByIdRepo(userId, addressId);
 
     if (!address) {
       throw new ApiError(404, 'Address not found.');
