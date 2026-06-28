@@ -1,11 +1,8 @@
 import {
-  addAddressService,
   getProfileService,
   loginUserService,
   logoutUserService,
   registerUserService,
-  removeAddressService,
-  updateAddressService,
   updateProfileService,
 } from '../services/user.service.js';
 import { AsyncHandler } from '../utils/AsyncHandler.js';
@@ -17,19 +14,20 @@ import crypto from 'crypto';
 import { sendEmail } from '../utils/SendEmail.js';
 import { User } from '../models/user.model.js';
 
+// Register a new user
+
 export const registerUser = AsyncHandler(async (req, res) => {
   const user = await registerUserService(req.body, req.file);
 
   return res.status(201).json(new ApiResponse(201, user, 'User registered successfully'));
 });
 
+// Verify email address
+
 export const verifyEmail = AsyncHandler(async (req, res) => {
   const { token } = req.params;
 
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(token)
-    .digest("hex");
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
   const user = await User.findOne({
     emailVerificationToken: hashedToken,
@@ -37,7 +35,7 @@ export const verifyEmail = AsyncHandler(async (req, res) => {
   });
 
   if (!user) {
-    throw new ApiError(400, "Invalid or expired token");
+    throw new ApiError(400, 'Invalid or expired token');
   }
 
   user.isVerified = true;
@@ -46,19 +44,19 @@ export const verifyEmail = AsyncHandler(async (req, res) => {
 
   await user.save({ validateBeforeSave: false });
 
-  res.status(200).json(
-    new ApiResponse(200, null, "Email verified successfully")
-  );
+  res.status(200).json(new ApiResponse(200, null, 'Email verified successfully'));
 });
 
+// Forgot password
+
 export const forgotPassword = AsyncHandler(async (req, res) => {
-  console.log("req body", req.body)
+  console.log('req body', req.body);
   const { email } = req.body;
 
   const user = await User.findOne({ email });
 
   if (!user) {
-    throw new ApiError(404, "User not found");
+    throw new ApiError(404, 'User not found');
   }
 
   const token = user.generateResetPasswordToken();
@@ -68,23 +66,20 @@ export const forgotPassword = AsyncHandler(async (req, res) => {
 
   await sendEmail({
     to: user.email,
-    subject: "Password Reset Request",
+    subject: 'Password Reset Request',
     text: `Reset your password: ${resetUrl}`,
   });
 
-  res.status(200).json(
-    new ApiResponse(200, null, "Password reset link sent to email")
-  );
+  res.status(200).json(new ApiResponse(200, null, 'Password reset link sent to email'));
 });
+
+// Reset password
 
 export const resetPassword = AsyncHandler(async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
 
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(token)
-    .digest("hex");
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
   const user = await User.findOne({
     resetPasswordToken: hashedToken,
@@ -92,7 +87,7 @@ export const resetPassword = AsyncHandler(async (req, res) => {
   });
 
   if (!user) {
-    throw new ApiError(400, "Invalid or expired token");
+    throw new ApiError(400, 'Invalid or expired token');
   }
 
   user.password = password; // will be hashed by pre-save hook
@@ -101,10 +96,10 @@ export const resetPassword = AsyncHandler(async (req, res) => {
 
   await user.save();
 
-  res.status(200).json(
-    new ApiResponse(200, null, "Password reset successful")
-  );
+  res.status(200).json(new ApiResponse(200, null, 'Password reset successful'));
 });
+
+// Login user and set cookies for access and refresh tokens
 
 export const loginUser = AsyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -133,6 +128,8 @@ export const loginUser = AsyncHandler(async (req, res) => {
     );
 });
 
+// Logout user and clear cookies for access and refresh tokens
+
 export const logoutUser = AsyncHandler(async (req, res) => {
   const userId = req?.user?._id;
 
@@ -149,93 +146,24 @@ export const logoutUser = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, 'Logout successful'));
 });
 
+// Get user profile
+
 export const getProfile = AsyncHandler(async (req, res) => {
   const userId = req.user._id;
 
   const user = await getProfileService(userId);
 
-  return res
-  .status(200)
-  .json(
-    new ApiResponse(
-      200,
-      user,
-      "Profile fetched successfully"
-    )
-  )
-})
+  return res.status(200).json(new ApiResponse(200, user, 'Profile fetched successfully'));
+});
+
+// Update user profile
 
 export const updateProfile = AsyncHandler(async (req, res) => {
   const userId = req.user._id;
   const data = req.body;
   const file = req.file;
 
-  const user = await updateProfileService(userId, data, file)
+  const user = await updateProfileService(userId, data, file);
 
-  return res
-  .status(200)
-  .json(
-    new ApiResponse(
-      200,
-      user,
-      "Profile updated successfully"
-    )
-  )
-})
-
-export const addAddress = AsyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  const address = req.body;
-
-  const user = await addAddressService(userId, address)
-
-  return res
-  .status(200)
-  .json(
-    new ApiResponse(
-      200,
-      user,
-      "Address added successfully"
-    )
-  )
-})
-
-export const updateAddress = AsyncHandler(async (req, res) => {
-  const { addressId } = req.params;
-  const userId = req.user._id;
-  const data = req.body;
-
-  const user = await updateAddressService(userId, addressId, data)
-
-  res
-  .status(200)
-  .json(
-    new ApiResponse(
-      200,
-      user,
-      "Address updated successfully"
-    )
-  )
-
-})
-
-export const removeAddress = AsyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  const { addressId } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(addressId)) {
-  throw new ApiError(400, "Invalid address ID");
-}
-
-  const user = await removeAddressService(userId, addressId)
-
-  return res
-  .status(200)
-  .json(
-    new ApiResponse(
-      200,
-      user,
-      "Address removed successfully"
-    )
-  )
-})
+  return res.status(200).json(new ApiResponse(200, user, 'Profile updated successfully'));
+});

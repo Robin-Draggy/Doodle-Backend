@@ -38,21 +38,6 @@ const userSchema = new mongoose.Schema(
     avatar: {
       type: String,
     },
-
-    addresses: [
-      {
-        fullName: String,
-        phone: String,
-        addressLine: String,
-        city: String,
-        postalCode: String,
-        country: String,
-        isDefault: {
-          type: Boolean,
-          default: false,
-        },
-      },
-    ],
     
     isVerified: {
       type: Boolean,
