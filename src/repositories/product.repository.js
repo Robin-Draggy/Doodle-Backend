@@ -10,8 +10,6 @@ export const findProductByIdLeanRepo = (productId) => Product.findById(productId
 
 export const createProductRepo = (data) => Product.create(data);
 
-export const saveProductRepo = (product) => product.save();
-
 export const deleteProductRepo = (productId) => Product.findByIdAndDelete(productId);
 
 export const countProductsInCategoryRepo = (categoryId) => {
