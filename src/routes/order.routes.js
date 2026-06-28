@@ -17,14 +17,14 @@ import {
 } from "../validations/order.validation.js";
 
 import { validate } from "../middlewares/validation.middleware.js";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { verify } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/role.check.middleware.js";
 
 const router = express.Router();
 
 // Customer Routes
 
-router.use(verifyJWT);
+router.use(verify);
 
 router.post(
   "/",
