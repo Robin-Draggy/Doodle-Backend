@@ -1,4 +1,5 @@
 import { createCartRepo, findCartDocumentByUserRepo } from '../repositories/cart.repository.js';
+import { findCouponByCodeRepo } from '../repositories/coupon.repository.js';
 
 // Get or Create Cart
 
@@ -38,4 +39,25 @@ export const calculateCartTotals = (cart) => {
   cart.subtotal = subtotal;
   cart.totalDiscount = totalDiscount;
   cart.grandTotal = subtotal - totalDiscount;
+};
+
+
+// Generate Unique Coupon Code
+
+export const generateCouponCode = (prefix = 'SAVE', length = 6) => {
+  const random = crypto.randomBytes(length).toString('hex').slice(0, length).toUpperCase();
+
+  return `${prefix}-${random}`;
+};
+
+export const generateUniqueCouponCode = async () => {
+  let code;
+  let exists;
+
+  do {
+    code = generateCouponCode();
+    exists = await findCouponByCodeRepo(code);
+  } while (exists);
+
+  return code;
 };
