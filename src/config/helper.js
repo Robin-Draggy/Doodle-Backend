@@ -62,3 +62,62 @@ export const generateUniqueCouponCode = async () => {
 
   return code;
 };
+
+
+// Generate Unique Order Number
+
+export const generateOrderNumber = () => {
+  const date = new Date();
+
+  const year = date.getFullYear();
+
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+
+  const day = String(date.getDate()).padStart(2, '0');
+
+  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+  return `ORD-${year}${month}${day}-${random}`;
+};
+
+// Build Order Items Snapshot
+
+export const buildOrderItems = (cart) => {
+  return cart.items.map((item) => ({
+    product: item.product._id,
+
+    name: item.product.name,
+
+    slug: item.product.slug,
+
+    image: item.product.images?.[0] ?? null,
+
+    quantity: item.quantity,
+
+    unitPrice: item.priceAtAddition,
+
+    discountPrice: item.discountPriceAtAddition,
+
+    finalPrice: item.finalPrice,
+
+    subtotal: item.subtotal,
+  }));
+};
+
+// Build Shipping Address Snapshot
+
+export const buildShippingAddress = (address) => {
+  return {
+    fullName: address.fullName,
+
+    phone: address.phone,
+
+    addressLine: address.addressLine,
+
+    city: address.city,
+
+    postalCode: address.postalCode,
+
+    country: address.country,
+  };
+};

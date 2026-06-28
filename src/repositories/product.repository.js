@@ -15,8 +15,53 @@ export const saveProductRepo = (product) => product.save();
 export const deleteProductRepo = (productId) => Product.findByIdAndDelete(productId);
 
 export const countProductsInCategoryRepo = (categoryId) => {
-    return Product.countDocuments({
-        category: categoryId,
-        status: "published",
-    });
+  return Product.countDocuments({
+    category: categoryId,
+    status: 'published',
+  });
+};
+
+// Save Product
+
+export const saveProductRepo = (product, options = {}) => {
+  return product.save(options);
+};
+
+// Reserve Product Stock
+
+export const reserveProductStockRepo = (productId, quantity, options = {}) => {
+  return Product.findOneAndUpdate(
+    {
+      _id: productId,
+      stock: {
+        $gte: quantity,
+      },
+    },
+    {
+      $inc: {
+        stock: -quantity,
+      },
+    },
+    {
+      new: true,
+      session: options.session,
+    }
+  );
+};
+
+// Restore Product Stock
+
+export const restoreProductStockRepo = (productId, quantity, options = {}) => {
+  return Product.findByIdAndUpdate(
+    productId,
+    {
+      $inc: {
+        stock: quantity,
+      },
+    },
+    {
+      new: true,
+      session: options.session,
+    }
+  );
 };

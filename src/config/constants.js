@@ -8,6 +8,23 @@ export const CATEGORY_STATUS = ['active', 'inactive'];
 
 export const REVIEW_STATUS = ['published', 'hidden'];
 
+export const ORDER_STATUS_FLOW = {
+  pending: ["confirmed", "cancelled"],
+  confirmed: ["processing", "cancelled"],
+  processing: ["shipped"],
+  shipped: ["delivered"],
+  delivered: [],
+  cancelled: [],
+  refunded: [],
+};
+
+export const PAYMENT_STATUS_FLOW = {
+  pending: ["paid", "failed"],
+  paid: ["refunded"],
+  failed: [],
+  refunded: [],
+};
+
 export const PARSE_JSON_FIELD = (field) => {
   if (field === undefined || field === null || field === '') {
     return undefined;

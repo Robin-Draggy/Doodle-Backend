@@ -64,6 +64,7 @@ import { router as wishlistRoutes } from './routes/wishlist.routes.js';
 import { router as cartRoutes } from './routes/cart.routes.js';
 import { router as addressRoutes } from './routes/address.routes.js';
 import { router as couponRoutes } from './routes/coupon.routes.js';
+import { router as orderRoutes } from './routes/order.routes.js';
 import { ApiError } from './utils/ApiError.js';
 
 app.use('/api/v1/users', userRoutes);
@@ -74,6 +75,7 @@ app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/cart', cartRoutes);
 app.use('/api/v1/addresses', addressRoutes);
 app.use('/api/v1/coupons', couponRoutes);
+app.use('/api/v1/orders', orderRoutes);
 
 // Global error handler
 

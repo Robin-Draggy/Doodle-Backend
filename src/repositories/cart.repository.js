@@ -30,8 +30,11 @@ export const findCartDocumentByUserRepo = (userId) => {
 
 // Update cart by user ID
 
-export const saveCartRepo = (cart) => {
-  return cart.save();
+export const saveCartRepo = (
+  cart,
+  options = {}
+) => {
+  return cart.save(options);
 };
 
 // Delete cart by user ID

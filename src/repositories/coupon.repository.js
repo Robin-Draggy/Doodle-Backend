@@ -1,4 +1,4 @@
-import { Coupon } from "../models/coupon.model.js";
+import { Coupon } from '../models/coupon.model.js';
 
 // Create
 
@@ -56,33 +56,22 @@ export const findActiveCouponsRepo = () => {
 
 // Update
 
-export const updateCouponRepo = (
-  couponId,
-  data
-) => {
-  return Coupon.findByIdAndUpdate(
-    couponId,
-    data,
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
+export const updateCouponRepo = (couponId, data) => {
+  return Coupon.findByIdAndUpdate(couponId, data, {
+    new: true,
+    runValidators: true,
+  });
 };
 
 // Delete
 
-export const deleteCouponRepo = (
-  couponId
-) => {
+export const deleteCouponRepo = (couponId) => {
   return Coupon.findByIdAndDelete(couponId);
 };
 
 // Utilities
 
-export const incrementCouponUsageRepo = (
-  couponId
-) => {
+export const incrementCouponUsageRepo = (couponId) => {
   return Coupon.findByIdAndUpdate(
     couponId,
     {
@@ -96,8 +85,49 @@ export const incrementCouponUsageRepo = (
   );
 };
 
+export const decrementCouponUsageRepo = (couponId) => {
+  return Coupon.findByIdAndUpdate(
+    couponId,
+    {
+      $inc: {
+        usedCount: -1,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+};
+
+export const saveCouponRepo = (coupon, options = {}) => {
+  return coupon.save(options);
+};
+
+// Increment Coupon Usage Count (If Applied)
+
+export const incrementCouponUsageRepo = (
+  couponId,
+  options = {}
+) => {
+  return Coupon.findByIdAndUpdate(
+    couponId,
+    {
+      $inc: {
+        usedCount: 1,
+      },
+    },
+    {
+      new: true,
+      session: options.session,
+    }
+  );
+};
+
+// Decrement Coupon Usage Count (If Applied)
+
 export const decrementCouponUsageRepo = (
-  couponId
+  couponId,
+  options = {}
 ) => {
   return Coupon.findByIdAndUpdate(
     couponId,
@@ -108,6 +138,7 @@ export const decrementCouponUsageRepo = (
     },
     {
       new: true,
+      session: options.session,
     }
   );
 };
