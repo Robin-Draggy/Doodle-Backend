@@ -71,44 +71,13 @@ export const deleteCouponRepo = (couponId) => {
 
 // Utilities
 
-export const incrementCouponUsageRepo = (couponId) => {
-  return Coupon.findByIdAndUpdate(
-    couponId,
-    {
-      $inc: {
-        usedCount: 1,
-      },
-    },
-    {
-      new: true,
-    }
-  );
-};
-
-export const decrementCouponUsageRepo = (couponId) => {
-  return Coupon.findByIdAndUpdate(
-    couponId,
-    {
-      $inc: {
-        usedCount: -1,
-      },
-    },
-    {
-      new: true,
-    }
-  );
-};
-
 export const saveCouponRepo = (coupon, options = {}) => {
   return coupon.save(options);
 };
 
 // Increment Coupon Usage Count (If Applied)
 
-export const incrementCouponUsageRepo = (
-  couponId,
-  options = {}
-) => {
+export const incrementCouponUsageRepo = (couponId, options = {}) => {
   return Coupon.findByIdAndUpdate(
     couponId,
     {
@@ -125,10 +94,7 @@ export const incrementCouponUsageRepo = (
 
 // Decrement Coupon Usage Count (If Applied)
 
-export const decrementCouponUsageRepo = (
-  couponId,
-  options = {}
-) => {
+export const decrementCouponUsageRepo = (couponId, options = {}) => {
   return Coupon.findByIdAndUpdate(
     couponId,
     {
