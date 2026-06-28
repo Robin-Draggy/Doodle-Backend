@@ -16,9 +16,9 @@ import {
   updatePaymentStatusSchema,
 } from "../validations/order.validation.js";
 
-import { validate } from "../middlewares/validate.middleware.js";
+import { validate } from "../middlewares/validation.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { authorize } from "../middlewares/authorize.middleware.js";
+import { authorize } from "../middlewares/role.check.middleware.js";
 
 const router = express.Router();
 
