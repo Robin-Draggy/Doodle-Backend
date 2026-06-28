@@ -1,4 +1,4 @@
-import { createCartRepo, findCartDocumentByUserRepo } from '../repositories/cart.repository';
+import { createCartRepo, findCartDocumentByUserRepo } from '../repositories/cart.repository.js';
 
 // Get or Create Cart
 
