@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { validate } from '../middlewares/validation.middleware.js';
-import { addressSchema, registerUserSchema } from '../validations/user.validation.js';
+import {  registerUserSchema } from '../validations/user.validation.js';
 import {
   forgotPassword,
   getProfile,
