@@ -1,4 +1,4 @@
-import express from "express";
+import { Router } from "express";
 
 import {
   createOrder,
@@ -20,7 +20,7 @@ import { validate } from "../middlewares/validation.middleware.js";
 import { verify } from "../middlewares/auth.middleware.js";
 import { authorize } from "../middlewares/role.check.middleware.js";
 
-const router = express.Router();
+export const router = Router();
 
 // Customer Routes
 
