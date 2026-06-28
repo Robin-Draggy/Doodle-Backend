@@ -18,7 +18,7 @@ export const createOrder = AsyncHandler(
     console.log("Validated Data:", req.validatedData); // Debugging line
     const order = await createOrderService({
       userId: req.user._id,
-      ...req.validatedData,
+      ...req.body,
     });
 
     return res
