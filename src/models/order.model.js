@@ -90,7 +90,17 @@ const shippingAddressSchema = new mongoose.Schema(
       required: true,
     },
 
-    city: {
+    division: {
+      type: String,
+      required: true,
+    },
+
+    district: {
+      type: String,
+      required: true,
+    },
+
+    area: {
       type: String,
       required: true,
     },
@@ -104,6 +114,7 @@ const shippingAddressSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+
   },
   {
     _id: false,

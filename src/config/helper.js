@@ -86,7 +86,7 @@ export const buildOrderItems = (cart) => {
   return cart.items.map((item) => ({
     product: item.product._id,
 
-    name: item.product.name,
+    name: item.product.title,
 
     slug: item.product.slug,
 
@@ -114,7 +114,11 @@ export const buildShippingAddress = (address) => {
 
     addressLine: address.addressLine,
 
-    city: address.city,
+    division: address.division,
+
+    district: address.district,
+
+    area: address.area,
 
     postalCode: address.postalCode,
 
