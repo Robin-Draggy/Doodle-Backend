@@ -220,7 +220,7 @@ export const createOrderService = async ({
 
     await session.commitTransaction();
 
-    const populatedOrder = await findOrderByIdRepo(createdOrder._id);
+    const populatedOrder = await findOrderByIdRepo(order._id);
 
     return populatedOrder;
   } catch (error) {
