@@ -9,11 +9,11 @@ import {
 } from "../services/order.service.js";
 
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { asyncHandler } from "../utils/AsyncHandler.js";
+import { AsyncHandler } from "../utils/AsyncHandler.js";
 
 // Create Order
 
-export const createOrder = asyncHandler(
+export const createOrder = AsyncHandler(
   async (req, res) => {
     const order = await createOrderService({
       userId: req.user._id,
@@ -34,7 +34,7 @@ export const createOrder = asyncHandler(
 
 // Get My Orders
 
-export const getMyOrders = asyncHandler(
+export const getMyOrders = AsyncHandler(
   async (req, res) => {
     const orders =
       await getMyOrdersService(
@@ -55,7 +55,7 @@ export const getMyOrders = asyncHandler(
 
 // Get Order By ID
 
-export const getOrderById = asyncHandler(
+export const getOrderById = AsyncHandler(
   async (req, res) => {
     const order =
       await getOrderByIdService(
@@ -77,7 +77,7 @@ export const getOrderById = asyncHandler(
 
 // Get All Orders
 
-export const getAllOrders = asyncHandler(
+export const getAllOrders = AsyncHandler(
   async (req, res) => {
     const orders =
       await getAllOrdersService();
@@ -97,7 +97,7 @@ export const getAllOrders = asyncHandler(
 // Update Order Status
 
 export const updateOrderStatus =
-  asyncHandler(async (req, res) => {
+  AsyncHandler(async (req, res) => {
     const order =
       await updateOrderStatusService(
         req.params.orderId,
@@ -118,7 +118,7 @@ export const updateOrderStatus =
 // Update Payment Status
 
 export const updatePaymentStatus =
-  asyncHandler(async (req, res) => {
+  AsyncHandler(async (req, res) => {
     const order =
       await updatePaymentStatusService(
         req.params.orderId,
@@ -139,7 +139,7 @@ export const updatePaymentStatus =
 // Cancel Order
 
 export const cancelOrder =
-  asyncHandler(async (req, res) => {
+  AsyncHandler(async (req, res) => {
     const order =
       await cancelOrderService(
         req.params.orderId,
