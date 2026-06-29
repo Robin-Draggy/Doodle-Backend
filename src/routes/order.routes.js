@@ -62,5 +62,3 @@ router.patch(
   validate(updatePaymentStatusSchema),
   updatePaymentStatus
 );
-
-export default router;

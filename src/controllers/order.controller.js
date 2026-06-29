@@ -100,6 +100,7 @@ export const getAllOrders = AsyncHandler(
 
 export const updateOrderStatus =
   AsyncHandler(async (req, res) => {
+    console.log("checking req body in controller:", req.body); // Debugging line
     const order =
       await updateOrderStatusService(
         req.params.orderId,
@@ -121,6 +122,7 @@ export const updateOrderStatus =
 
 export const updatePaymentStatus =
   AsyncHandler(async (req, res) => {
+    console.log("checking req body in controller:", req.body); // Debugging line
     const order =
       await updatePaymentStatusService(
         req.params.orderId,
