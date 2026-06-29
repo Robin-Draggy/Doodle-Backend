@@ -32,7 +32,7 @@ router.post(
   createOrder
 );
 
-router.get("/", getMyOrders);
+router.get("/my-orders", getMyOrders);
 
 router.get("/:orderId", getOrderById);
 
