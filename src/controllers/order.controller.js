@@ -80,6 +80,7 @@ export const getOrderById = AsyncHandler(
 
 export const getAllOrders = AsyncHandler(
   async (req, res) => {
+    console.log("Fetching all orders in the controller..."); // Debugging line
     const orders =
       await getAllOrdersService();
 

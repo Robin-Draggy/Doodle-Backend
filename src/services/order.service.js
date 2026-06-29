@@ -262,8 +262,17 @@ export const getOrderByIdService = async (orderId, user) => {
 
 // Get All Orders Service
 
+// export const getAllOrdersService = async () => {
+//   console.log('Fetching all orders in the service...'); // Debugging line
+//   return await findOrdersRepo();
+// };
+
 export const getAllOrdersService = async () => {
-  return await findOrdersRepo();
+  const orders = await findOrdersRepo();
+
+  console.log("Orders found:", orders.length);
+
+  return orders;
 };
 
 // Update Order Status Service
