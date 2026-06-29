@@ -16,12 +16,6 @@ export const savePaymentRepo = (payment, options = {}) => {
 
 // Find By ID
 
-export const findPaymentByIdRepo = (paymentId) => {
-  return Payment.findById(paymentId)
-    .populate('user', 'username email')
-    .populate('order', 'orderNumber totalAmount orderStatus paymentStatus');
-};
-
 export const findPaymentByIdRepo = (
   paymentId
 ) => {
