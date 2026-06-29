@@ -13,12 +13,6 @@ export const createOrderSchema = z.object({
     .min(1)
     .optional(),
 
-  paymentMethod: z.enum([
-    "cash_on_delivery",
-    "stripe",
-    "sslcommerz",
-  ]),
-
   notes: z
     .string()
     .trim()

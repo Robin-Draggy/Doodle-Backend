@@ -25,6 +25,25 @@ export const PAYMENT_STATUS_FLOW = {
   refunded: [],
 };
 
+export const PAYMENT_GATEWAYS = [
+  "cash_on_delivery",
+  "stripe",
+  "sslcommerz",
+  "bkash",
+  "nagad",
+];
+
+export const PAYMENT_STATUS = [
+  "pending",
+  "processing",
+  "paid",
+  "failed",
+  "cancelled",
+  "refunded",
+];
+
+export const PAYMENT_CURRENCY = "BDT";
+
 export const PARSE_JSON_FIELD = (field) => {
   if (field === undefined || field === null || field === '') {
     return undefined;

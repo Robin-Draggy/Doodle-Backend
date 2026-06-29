@@ -193,12 +193,6 @@ const orderSchema = new mongoose.Schema(
       min: 0,
     },
 
-    paymentMethod: {
-      type: String,
-      enum: ['cash_on_delivery', 'sslcommerz', 'stripe', 'paypal'],
-      default: 'cash_on_delivery',
-    },
-
     paymentStatus: {
       type: String,
       enum: ['pending', 'paid', 'failed', 'refunded'],

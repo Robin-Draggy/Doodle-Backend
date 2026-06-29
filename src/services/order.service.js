@@ -30,7 +30,6 @@ export const createOrderService = async ({
   userId,
   addressId,
   couponCode,
-  paymentMethod,
   notes,
 }) => {
   const session = await mongoose.startSession();
@@ -69,7 +68,6 @@ export const createOrderService = async ({
       }
     }
 
-    console.log('userId and addressId', userId, addressId);
 
     // Loading Shipping Address
     const address = await findUserAddressByIdRepo(userId, addressId);
@@ -179,8 +177,6 @@ export const createOrderService = async ({
 
         totalAmount,
 
-        paymentMethod,
-
         notes,
       },
       {
@@ -262,18 +258,10 @@ export const getOrderByIdService = async (orderId, user) => {
 
 // Get All Orders Service
 
-// export const getAllOrdersService = async () => {
-//   console.log('Fetching all orders in the service...'); // Debugging line
-//   return await findOrdersRepo();
-// };
-
 export const getAllOrdersService = async () => {
-  const orders = await findOrdersRepo();
-
-  console.log("Orders found:", orders.length);
-
-  return orders;
+  return await findOrdersRepo();
 };
+
 
 // Update Order Status Service
 

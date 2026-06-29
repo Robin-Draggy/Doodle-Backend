@@ -1,41 +1,31 @@
-import { Order } from "../models/order.model.js";
+import { Order } from '../models/order.model.js';
 
 // Create
 
 export const createOrderRepo = (data, options = {}) => {
-  return Order.create([data], options).then(
-    ([order]) => order
-  );
+  return Order.create([data], options).then(([order]) => order);
 };
 
 // Find One
 
 export const findOrderByIdRepo = (orderId) => {
-  return Order.findById(orderId)
-    .populate("user", "username email")
-    .populate("coupon", "code");
+  return Order.findById(orderId).populate('user', 'username email').populate('coupon', 'code');
 };
 
-export const findOrderByIdLeanRepo = (
-  orderId
-) => {
+export const findOrderByIdLeanRepo = (orderId) => {
   return Order.findById(orderId)
-    .populate("user", "username email")
-    .populate("coupon", "code")
+    .populate('user', 'username email')
+    .populate('coupon', 'code')
     .lean();
 };
 
-export const findOrderByNumberRepo = (
-  orderNumber
-) => {
+export const findOrderByNumberRepo = (orderNumber) => {
   return Order.findOne({
     orderNumber,
   });
 };
 
-export const findOrderByNumberLeanRepo = (
-  orderNumber
-) => {
+export const findOrderByNumberLeanRepo = (orderNumber) => {
   return Order.findOne({
     orderNumber,
   }).lean();
@@ -43,36 +33,27 @@ export const findOrderByNumberLeanRepo = (
 
 // Find Many
 
-export const findOrdersRepo = (
-  filter = {}
-) => {
-  return Order.find(filter)
-    .populate("user", "username email")
-    .populate("coupon", "code")
-    .sort({
-      createdAt: -1,
-    });
+export const findOrdersRepo = (filter = {}) => {
+  return Order.find(filter).populate('user', 'username email').populate('coupon', 'code').sort({
+    createdAt: -1,
+  });
 };
 
-export const findOrdersLeanRepo = (
-  filter = {}
-) => {
+export const findOrdersLeanRepo = (filter = {}) => {
   return Order.find(filter)
-    .populate("user", "username email")
-    .populate("coupon", "code")
+    .populate('user', 'username email')
+    .populate('coupon', 'code')
     .sort({
       createdAt: -1,
     })
     .lean();
 };
 
-export const findUserOrdersRepo = (
-  userId
-) => {
+export const findUserOrdersRepo = (userId) => {
   return Order.find({
     user: userId,
   })
-    .populate("coupon", "code")
+    .populate('coupon', 'code')
     .sort({
       createdAt: -1,
     })
@@ -81,45 +62,37 @@ export const findUserOrdersRepo = (
 
 // Update
 
-export const updateOrderRepo = (
-  orderId,
-  data
-) => {
-  return Order.findByIdAndUpdate(
-    orderId,
-    data,
-    {
-      new: true,
-      runValidators: true,
-    }
-  )
-    .populate("user", "username email")
-    .populate("coupon", "code");
+export const updateOrderRepo = (orderId, data) => {
+  return Order.findByIdAndUpdate(orderId, data, {
+    new: true,
+    runValidators: true,
+  })
+    .populate('user', 'username email')
+    .populate('coupon', 'code');
 };
 
 // Delete
 
-export const deleteOrderRepo = (
-  orderId
-) => {
+export const deleteOrderRepo = (orderId) => {
   return Order.findByIdAndDelete(orderId);
 };
 
 // Utilities
 
-export const countOrdersRepo = (
-  filter = {}
-) => {
+export const countOrdersRepo = (filter = {}) => {
   return Order.countDocuments(filter);
 };
 
 // Find Order Document By ID
 
-export const findOrderDocumentByIdRepo = (
-  orderId,
+export const findOrderDocumentByIdRepo = (orderId, options = {}) => {
+  return Order.findById(orderId).session(options.session);
+};
+
+
+export const saveOrderRepo = (
+  order,
   options = {}
 ) => {
-  return Order.findById(orderId).session(
-    options.session
-  );
+  return order.save(options);
 };
