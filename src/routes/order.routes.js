@@ -44,7 +44,7 @@ router.patch(
 // Admin Routes
 
 router.get(
-  "/admin",
+  "/",
   authorize("admin"),
   getAllOrders
 );
