@@ -65,7 +65,7 @@ import { router as cartRoutes } from './routes/cart.routes.js';
 import { router as addressRoutes } from './routes/address.routes.js';
 import { router as couponRoutes } from './routes/coupon.routes.js';
 import { router as orderRoutes } from './routes/order.routes.js';
-import { rotuer as paymentRoutes } from './routes/payment.routes.js'
+import { router as paymentRoutes } from './routes/payment.routes.js'
 import { ApiError } from './utils/ApiError.js';
 
 app.use('/api/v1/users', userRoutes);
