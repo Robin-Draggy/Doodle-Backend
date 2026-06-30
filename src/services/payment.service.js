@@ -15,8 +15,6 @@ import {
 
 import { findOrderDocumentByIdRepo } from '../repositories/order.repository.js';
 
-import { getPaymentGateway } from '../gateways/payment.gateway.js';
-
 import { generatePaymentReference } from '../config/helper.js';
 
 import {
@@ -25,6 +23,8 @@ import {
   PAYMENT_STATUS_FLOW,
   PAYMENT_ORDER_STATUS,
 } from '../config/constants.js';
+
+import { PaymentGatewayFactory } from '../gateways/PaymentGatewayFactory.js';
 
 // Create Payment
 
@@ -89,7 +89,7 @@ export const createPaymentService = async ({ orderId, userId, gateway }) => {
       }
     );
 
-    const paymentGateway = getPaymentGateway(gateway);
+    const paymentGateway = PaymentGatewayFactory.make(gateway);
 
     const gatewayResponse = await paymentGateway.createPayment(payment, order);
 
@@ -175,7 +175,7 @@ export const verifyPaymentService = async ({ paymentReference, gatewayPayload })
        Gateway Verification
     ===================================== */
 
-    const paymentGateway = getPaymentGateway(payment.gateway);
+    const paymentGateway = PaymentGatewayFactory.make(payment.gateway);
 
     const verification = await paymentGateway.verifyPayment(payment, gatewayPayload);
 
@@ -381,7 +381,6 @@ export const refundPaymentService = async ({ paymentId, refundAmount, reason, ad
   session.startTransaction();
 
   try {
-
     const payment = await findPaymentByIdRepo(paymentId);
 
     if (!payment) {
