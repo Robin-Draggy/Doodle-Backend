@@ -19,7 +19,12 @@ import { getPaymentGateway } from '../gateways/payment.gateway.js';
 
 import { generatePaymentReference } from '../config/helper.js';
 
-import { PAYMENT_GATEWAYS, PAYMENT_CURRENCY, PAYMENT_STATUS_FLOW } from '../config/constants.js';
+import {
+  PAYMENT_GATEWAYS,
+  PAYMENT_CURRENCY,
+  PAYMENT_STATUS_FLOW,
+  PAYMENT_ORDER_STATUS,
+} from '../config/constants.js';
 
 // Create Payment
 
@@ -279,4 +284,168 @@ export const getPaymentsByOrderService = async ({ orderId, user }) => {
 
 export const getAllPaymentsService = async () => {
   return await findPaymentsRepo();
+};
+
+export const paymentWebhookService = async ({ gateway, paymentReference, gatewayPayload }) => {
+  const session = await mongoose.startSession();
+
+  session.startTransaction();
+
+  try {
+    // Find payment
+
+    const payment = await findPaymentByReferenceRepo(paymentReference);
+
+    if (!payment) {
+      throw new ApiError(404, 'Payment not found.');
+    }
+
+    // Ignore duplicate webhook
+
+    if (payment.status === 'paid') {
+      await session.commitTransaction();
+
+      return payment;
+    }
+
+    // Load gateway
+
+    const paymentGateway = PaymentGatewayFactory.make(gateway);
+
+    // Verify payment
+    const paymentToOrderStatus = {
+      paid: 'paid',
+      failed: 'failed',
+      refunded: 'refunded',
+    };
+    const verification = await paymentGateway.verifyPayment({
+      payment,
+      gatewayPayload,
+    });
+
+    // Update payment
+
+    payment.status = verification.status;
+
+    payment.transactionId = verification.transactionId;
+
+    payment.gatewayTransactionId = verification.gatewayTransactionId;
+
+    payment.paymentIntentId = verification.paymentIntentId;
+
+    payment.gatewayResponse = verification.gatewayResponse;
+
+    if (verification.status === 'paid') {
+      payment.paidAt = new Date();
+    }
+
+    if (verification.status === 'failed') {
+      payment.failureReason = verification.failureReason ?? '';
+    }
+
+    await savePaymentRepo(payment, {
+      session,
+    });
+
+    // Update order
+
+    const order = await findOrderDocumentByIdRepo(payment.order);
+
+    if (!order) {
+      throw new ApiError(404, 'Order not found.');
+    }
+
+    if (PAYMENT_ORDER_STATUS[verification.status]) {
+      order.paymentStatus = PAYMENT_ORDER_STATUS[verification.status];
+    }
+
+    await saveOrderRepo(order, {
+      session,
+    });
+
+    await session.commitTransaction();
+
+    return payment;
+  } catch (error) {
+    await session.abortTransaction();
+
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
+export const refundPaymentService = async ({ paymentId, refundAmount, reason, adminId }) => {
+  const session = await mongoose.startSession();
+
+  session.startTransaction();
+
+  try {
+
+    const payment = await findPaymentByIdRepo(paymentId);
+
+    if (!payment) {
+      throw new ApiError(404, 'Payment not found.');
+    }
+
+    // Validating refund eligibility
+
+    if (payment.status !== 'paid') {
+      throw new ApiError(400, 'Only paid payments can be refunded.');
+    }
+
+    const order = await findOrderDocumentByIdRepo(payment.order);
+
+    if (!order) {
+      throw new ApiError(404, 'Order not found.');
+    }
+
+    const gateway = PaymentGatewayFactory.make(payment.gateway);
+
+    // Processing refund
+
+    const refund = await gateway.refundPayment({
+      payment,
+      reason,
+    });
+
+    // Update payment
+
+    payment.status = 'refunded';
+
+    payment.refundAmount = refund.refundAmount;
+
+    payment.refundReason = reason;
+
+    payment.refundedAt = new Date();
+
+    payment.gatewayResponse = {
+      ...payment.gatewayResponse,
+      refund,
+    };
+
+    await savePaymentRepo(payment, {
+      session,
+    });
+
+    // Update order
+
+    order.paymentStatus = 'refunded';
+
+    order.orderStatus = 'refunded';
+
+    await saveOrderRepo(order, {
+      session,
+    });
+
+    await session.commitTransaction();
+
+    return await findPaymentByIdRepo(payment._id);
+  } catch (error) {
+    await session.abortTransaction();
+
+    throw error;
+  } finally {
+    session.endSession();
+  }
 };

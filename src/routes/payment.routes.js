@@ -13,6 +13,7 @@ import {
 
 import {
   createPaymentSchema,
+  refundPaymentSchema,
   verifyPaymentSchema,
 } from "../validations/payment.validation.js";
 
@@ -82,5 +83,6 @@ router.get(
 router.post(
   "/:paymentId/refund",
   authorize("admin"),
+  validate(refundPaymentSchema),
   refundPayment
 );

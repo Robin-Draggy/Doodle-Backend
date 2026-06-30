@@ -44,6 +44,12 @@ export const PAYMENT_STATUS = [
 
 export const PAYMENT_CURRENCY = "BDT";
 
+export const PAYMENT_ORDER_STATUS = {
+      paid: 'paid',
+      failed: 'failed',
+      refunded: 'refunded',
+    };
+
 export const PARSE_JSON_FIELD = (field) => {
   if (field === undefined || field === null || field === '') {
     return undefined;

@@ -8,7 +8,9 @@ import {
   getPaymentByIdService,
   getPaymentsByOrderService,
   getAllPaymentsService,
-} from "../services/payment.service.js";
+  paymentWebhookService,
+  refundPaymentService,
+} from '../services/payment.service.js';
 
 // Create
 
@@ -32,83 +34,67 @@ export const verifyPayment = AsyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, payment, 'Payment verified successfully.'));
 });
 
+export const getMyPayments = AsyncHandler(async (req, res) => {
+  const payments = await getMyPaymentsService(req.user._id);
 
-export const getMyPayments = AsyncHandler(
-  async (req, res) => {
-    const payments =
-      await getMyPaymentsService(
-        req.user._id
-      );
+  return res.status(200).json(new ApiResponse(200, payments, 'Payments fetched successfully.'));
+});
 
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        payments,
-        "Payments fetched successfully."
-      )
-    );
-  }
-);
+export const getPaymentById = AsyncHandler(async (req, res) => {
+  const payment = await getPaymentByIdService({
+    paymentId: req.params.paymentId,
+    user: req.user,
+  });
 
+  return res.status(200).json(new ApiResponse(200, payment, 'Payment fetched successfully.'));
+});
 
-export const getPaymentById = AsyncHandler(
+export const getPaymentsByOrder = AsyncHandler(async (req, res) => {
+  const payments = await getPaymentsByOrderService({
+    orderId: req.params.orderId,
+    user: req.user,
+  });
+
+  return res.status(200).json(new ApiResponse(200, payments, 'Payments fetched successfully.'));
+});
+
+export const getAllPayments = AsyncHandler(async (req, res) => {
+  const payments = await getAllPaymentsService();
+
+  return res.status(200).json(new ApiResponse(200, payments, 'Payments fetched successfully.'));
+});
+
+export const paymentWebhook = AsyncHandler(async (req, res) => {
+  const payment = await paymentWebhookService({
+    gateway: req.params.gateway,
+    paymentReference: req.body.paymentReference,
+    gatewayPayload: req.body,
+  });
+
+  return res.status(200).json(new ApiResponse(200, payment, 'Webhook processed successfully.'));
+});
+
+export const refundPayment = AsyncHandler(
   async (req, res) => {
     const payment =
-      await getPaymentByIdService({
-        paymentId:
-          req.params.paymentId,
-        user: req.user,
+      await refundPaymentService({
+        paymentId: req.params.paymentId,
+
+        refundAmount:
+          req.body.refundAmount,
+
+        reason:
+          req.body.reason,
+
+        adminId: req.user._id,
       });
 
     return res.status(200).json(
       new ApiResponse(
         200,
         payment,
-        "Payment fetched successfully."
+        "Payment refunded successfully."
       )
     );
   }
 );
-
-
-export const getPaymentsByOrder =
-  AsyncHandler(
-    async (req, res) => {
-      const payments =
-        await getPaymentsByOrderService(
-          {
-            orderId:
-              req.params.orderId,
-            user: req.user,
-          }
-        );
-
-      return res.status(200).json(
-        new ApiResponse(
-          200,
-          payments,
-          "Payments fetched successfully."
-        )
-      );
-    }
-  );
-
-
-  export const getAllPayments =
-  AsyncHandler(
-    async (req, res) => {
-      const payments =
-        await getAllPaymentsService();
-
-      return res.status(200).json(
-        new ApiResponse(
-          200,
-          payments,
-          "Payments fetched successfully."
-        )
-      );
-    }
-  );
-
-
-  
