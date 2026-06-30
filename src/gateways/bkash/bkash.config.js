@@ -11,20 +11,3 @@ export const bkashConfig = Object.freeze({
 
   callbackUrl: process.env.BKASH_CALLBACK_URL,
 });
-
-const required = [
-  "base_url",
-  "username",
-  "password",
-  "app_key",
-  "app_secret",
-  "callbackUrl",
-];
-
-for (const key of required) {
-  if (!bkashConfig[key]) {
-    throw new Error(
-      `Missing bKash configuration: ${key}`
-    );
-  }
-}
