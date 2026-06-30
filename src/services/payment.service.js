@@ -8,7 +8,6 @@ import {
   findLatestPaymentByOrderRepo,
   findPaymentByReferenceRepo,
   findPaymentByIdRepo,
-  findPaymentDocumentByIdRepo,
   findPaymentsByUserRepo,
   findPaymentsByOrderRepo,
   findPaymentsRepo,
@@ -243,7 +242,7 @@ export const getMyPaymentsService = async (userId) => {
 };
 
 export const getPaymentByIdService = async ({ paymentId, user }) => {
-  const payment = await findPaymentDocumentByIdRepo(paymentId);
+  const payment = await findPaymentByIdRepo(paymentId);
 
   if (!payment) {
     throw new ApiError(404, 'Payment not found.');
