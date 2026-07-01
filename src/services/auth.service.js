@@ -19,8 +19,8 @@ import {
 import { ApiError } from '../utils/ApiError.js';
 import { uploadOnCloudinary } from '../utils/Cloudinary.js';
 import { sendEmail } from '../emails/SendEmail.js';
-import { resetPasswordEmailTemplate } from "../emails/templates/resetPasswordEmail.js";
-import { verificationEmailTemplate } from "../emails/templates/verificationEmail.js";
+import { resetPasswordEmailTemplate } from "../emails/template/resetPasswordEmail.js";
+import { verificationEmailTemplate } from "../emails/template/verificationEmail.js";
 
 /* =====================================================
    Private Helpers
