@@ -38,8 +38,7 @@ export const uploadOnCloudinary = async (file) => {
       );
 
       stream.end(file.buffer);
-    });
-  } catch (error) {
+    });} catch (error) {
     console.error("Cloudinary Upload Error:", error);
     throw error instanceof ApiError
       ? error

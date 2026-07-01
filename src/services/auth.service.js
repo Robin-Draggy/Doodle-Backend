@@ -132,6 +132,7 @@ const verifyRefreshToken = (token) => {
 
 export const registerUserService = async (userData, file) => {
   const { username, email, password } = userData;
+  console.log("register user service",file)
 
   const existingUser = await findUserByEmailRepo(email);
 
