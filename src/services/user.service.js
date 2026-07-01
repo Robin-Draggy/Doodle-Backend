@@ -41,11 +41,11 @@ export const updateProfileService = async (userId, data, file) => {
   if (file?.path) {
     const uploaded = await uploadOnCloudinary(file.path);
 
-    if (!uploaded?.secure_url) {
+    if (!uploaded?.url) {
       throw new ApiError(500, 'Avatar upload failed.');
     }
 
-    updateData.avatar = uploaded.secure_url;
+    updateData.avatar = uploaded.url;
   }
 
   const updatedUser = await updateUserRepo(userId, updateData);

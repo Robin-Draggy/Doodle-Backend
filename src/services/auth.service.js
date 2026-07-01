@@ -55,11 +55,11 @@ const uploadAvatar = async (file) => {
 
   const uploaded = await uploadOnCloudinary(file.path);
 
-  if (!uploaded?.secure_url) {
+  if (!uploaded?.url) {
     throw new ApiError(500, 'Failed to upload avatar.');
   }
 
-  return uploaded.secure_url;
+  return uploaded.url;
 };
 
 /**
