@@ -18,7 +18,9 @@ import {
 
 import { ApiError } from '../utils/ApiError.js';
 import { uploadOnCloudinary } from '../utils/Cloudinary.js';
-import { sendEmail } from '../utils/SendEmail.js';
+import { sendEmail } from '../emails/SendEmail.js';
+import { resetPasswordEmailTemplate } from "../emails/templates/resetPasswordEmail.js";
+import { verificationEmailTemplate } from "../emails/templates/verificationEmail.js";
 
 /* =====================================================
    Private Helpers
@@ -68,21 +70,26 @@ const uploadAvatar = async (file) => {
  * Runs in the background.
  */
 const sendVerificationEmail = (user, verificationToken) => {
-  const verificationUrl = `${process.env.BASE_URL}/api/v1/auth/verify-email/${verificationToken}`;
 
-  sendEmail({
-    to: user.email,
-    subject: 'Verify your Doodle account',
-    text: `Welcome to Doodle!
+    const verificationUrl =
+        `${process.env.BASE_URL}/api/v1/auth/verify-email/${verificationToken}`;
 
-Please verify your email by clicking the link below:
+    sendEmail({
 
-${verificationUrl}
+        to: user.email,
 
-This link expires in 1 hour.`,
-  }).catch((error) => {
-    console.error('Verification email failed:', error);
-  });
+        subject: "Verify your Doodle account",
+
+        html: verificationEmailTemplate({
+
+            username: user.username,
+
+            verificationUrl,
+
+        }),
+
+    }).catch(console.error);
+
 };
 
 /**
@@ -93,18 +100,15 @@ const sendPasswordResetEmail = (user, resetToken) => {
 
   sendEmail({
     to: user.email,
-    subject: 'Reset your Doodle password',
-    text: `We received a request to reset your password.
 
-Click the link below:
+    subject: "Reset your Doodle password",
 
-${resetUrl}
-
-This link expires in 15 minutes.
-
-If you didn't request this, simply ignore this email.`,
+    html: resetPasswordEmailTemplate({
+      username: user.username,
+      resetUrl,
+    }),
   }).catch((error) => {
-    console.error('Password reset email failed:', error);
+    console.error("Password reset email failed:", error);
   });
 };
 
@@ -132,7 +136,7 @@ const verifyRefreshToken = (token) => {
 
 export const registerUserService = async (userData, file) => {
   const { username, email, password } = userData;
-  console.log("register user service",file)
+  console.log('register user service', file);
 
   const existingUser = await findUserByEmailRepo(email);
 
