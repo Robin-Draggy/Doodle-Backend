@@ -49,11 +49,11 @@ const generateAccessAndRefreshTokens = async (userId) => {
  * Upload avatar if provided.
  */
 const uploadAvatar = async (file) => {
-  if (!file?.path) {
+  if (!file) {
     return '';
   }
 
-  const uploaded = await uploadOnCloudinary(file.path);
+  const uploaded = await uploadOnCloudinary(file);
 
   if (!uploaded?.url) {
     throw new ApiError(500, 'Failed to upload avatar.');

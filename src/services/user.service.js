@@ -38,8 +38,8 @@ export const updateProfileService = async (userId, data, file) => {
     updateData.username = data.username;
   }
 
-  if (file?.path) {
-    const uploaded = await uploadOnCloudinary(file.path);
+  if (file) {
+    const uploaded = await uploadOnCloudinary(file);
 
     if (!uploaded?.url) {
       throw new ApiError(500, 'Avatar upload failed.');
