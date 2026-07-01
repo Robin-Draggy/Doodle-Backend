@@ -11,6 +11,8 @@ const userSchema = new mongoose.Schema(
       trim: true,
       minlength: 2,
       maxlength: 50,
+      unique: true,
+      index: true,
     },
 
     email: {
@@ -25,7 +27,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      minlength: 6,
+      minlength: 8,
       select: false,
     },
 
@@ -33,91 +35,130 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['user', 'admin'],
       default: 'user',
+      index: true,
     },
 
     avatar: {
       type: String,
+      default: '',
+      trim: true,
     },
-    
+
     isVerified: {
       type: Boolean,
       default: false,
+      index: true,
     },
 
     refreshToken: {
       type: String,
+      default: null,
       select: false,
     },
 
     emailVerificationToken: {
-      type: String
+      type: String,
+      default: null,
+      select: false,
     },
 
     emailVerificationExpiry: {
-      type: Date
+      type: Date,
+      default: null,
+      select: false,
     },
 
     resetPasswordToken: {
-      type: String
+      type: String,
+      default: null,
+      select: false,
     },
 
     resetPasswordExpiry: {
-      type: Date
-    }
+      type: Date,
+      default: null,
+      select: false,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    versionKey: false,
+  }
 );
 
-//   HASHING PASSWORD
+/* ======================================
+   Indexes
+====================================== */
+
+userSchema.index({
+  email: 1,
+});
+
+userSchema.index({
+  username: 1,
+});
+
+userSchema.index({
+  role: 1,
+});
+
+userSchema.index({
+  isVerified: 1,
+});
+
+/* ======================================
+   Password Hashing
+====================================== */
+
 userSchema.pre('save', async function () {
   if (!this.isModified('password')) return;
 
-  this.password = await bcrypt.hash(this.password, 10);
+  const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS) || 10;
+
+  this.password = await bcrypt.hash(this.password, saltRounds);
 });
 
-//   COMPARING PASSWORD
-userSchema.methods.isPasswordCorrect = async function (password) {
-  return await bcrypt.compare(password, this.password);
+/* ======================================
+   Instance Methods
+====================================== */
+
+// Compare Password
+
+userSchema.methods.isPasswordCorrect = function (password) {
+  return bcrypt.compare(password, this.password);
 };
 
-// EMAIL VERIFICATION
+// Generate Email Verification Token
+
 userSchema.methods.generateEmailVerificationToken = function () {
-  // generate raw token
-  const token = crypto.randomBytes(32).toString("hex");
+  const token = crypto.randomBytes(32).toString('hex');
 
-  // hash token before saving (security)
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(token)
-    .digest("hex");
+  this.emailVerificationToken = crypto.createHash('sha256').update(token).digest('hex');
 
-  this.emailVerificationToken = hashedToken;
-
-  this.emailVerificationExpiry = Date.now() + 1000 * 60 * 60; // 1 hour
-
-  return token; // send this via email
-};
-
-// PASSWORD RESET TOKEN
-userSchema.methods.generateResetPasswordToken = function () {
-  const token = crypto.randomBytes(32).toString("hex");
-
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(token)
-    .digest("hex");
-
-  this.resetPasswordToken = hashedToken;
-  this.resetPasswordExpiry = Date.now() + 15 * 60 * 1000; // 15 min
+  this.emailVerificationExpiry = new Date(Date.now() + 60 * 60 * 1000);
 
   return token;
 };
 
-// GENERATE ACCESS TOKEN
+// Generate Password Reset Token
+
+userSchema.methods.generateResetPasswordToken = function () {
+  const token = crypto.randomBytes(32).toString('hex');
+
+  this.resetPasswordToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  this.resetPasswordExpiry = new Date(Date.now() + 15 * 60 * 1000);
+
+  return token;
+};
+
+// Generate Access Token
+
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign(
     {
       _id: this._id,
+      email: this.email,
       role: this.role,
     },
     process.env.ACCESS_TOKEN_SECRET,
@@ -127,7 +168,8 @@ userSchema.methods.generateAccessToken = function () {
   );
 };
 
-// GENERATE REFRESH TOKEN
+// Generate Refresh Token
+
 userSchema.methods.generateRefreshToken = function () {
   return jwt.sign(
     {
@@ -139,5 +181,35 @@ userSchema.methods.generateRefreshToken = function () {
     }
   );
 };
+
+/* ======================================
+   Transform Output
+====================================== */
+
+userSchema.set('toJSON', {
+  transform(doc, ret) {
+    delete ret.password;
+    delete ret.refreshToken;
+    delete ret.emailVerificationToken;
+    delete ret.emailVerificationExpiry;
+    delete ret.resetPasswordToken;
+    delete ret.resetPasswordExpiry;
+
+    return ret;
+  },
+});
+
+userSchema.set('toObject', {
+  transform(doc, ret) {
+    delete ret.password;
+    delete ret.refreshToken;
+    delete ret.emailVerificationToken;
+    delete ret.emailVerificationExpiry;
+    delete ret.resetPasswordToken;
+    delete ret.resetPasswordExpiry;
+
+    return ret;
+  },
+});
 
 export const User = mongoose.model('User', userSchema);

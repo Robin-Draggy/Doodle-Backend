@@ -1,14 +1,19 @@
 import z from 'zod';
 
-export const registerUserSchema = z.object({
-  username: z.string().min(2, 'Name must be at least 2 characters').max(50),
+/* =====================================================
+   Update Profile
+===================================================== */
 
-  email: z.string().email('Invalid email format'),
-
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
-
-export const updateProfileSchema = z.object({
-  username: z.string().min(2).max(50).optional(),
-  email: z.string().email().optional(),
-});
+export const updateProfileSchema = z
+  .object({
+    username: z
+      .string()
+      .trim()
+      .min(2, 'Username must be at least 2 characters.')
+      .max(50, 'Username cannot exceed 50 characters.')
+      .optional(),
+  })
+  .strict()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field must be provided for update.',
+  });

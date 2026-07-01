@@ -1,39 +1,108 @@
 import { User } from '../models/user.model.js';
 
-// Find a user by email and include password and refreshToken fields
+/* ======================================
+   Create
+====================================== */
 
-export const findUserByEmail = (email) => {
-  return User.findOne({ email }).select('+password +refreshToken');
+export const createUserRepo = (userData) => {
+  return User.create(userData);
 };
 
-// Create a new user in the database
+/* ======================================
+   Find
+====================================== */
 
-export const createUser = (data) => {
-  return User.create(data);
+export const findUserByIdRepo = (userId, select = '-password -refreshToken') => {
+  return User.findById(userId).select(select);
 };
 
-// Update the refresh token for a user
-
-export const updateRefreshToken = (userId, token) => {
-  return User.findByIdAndUpdate(userId, { refreshToken: token }, { returnDocument: 'after' });
+export const findUserByEmailRepo = (email, select = '+password +refreshToken') => {
+  return User.findOne({
+    email: email.toLowerCase(),
+  }).select(select);
 };
 
-// Remove the refresh token for a user
-
-export const removeRefreshToken = (userId) => {
-  return User.findByIdAndUpdate(userId, { $unset: { refreshToken: '' } });
+export const findUserByRefreshTokenRepo = (refreshToken) => {
+  return User.findOne({
+    refreshToken,
+  }).select('+refreshToken');
 };
 
-// Find a user by ID and exclude password and refreshToken fields
-
-export const findUserById = (id) => {
-  return User.findById(id).select('-password -refreshToken');
+export const findUserByEmailVerificationTokenRepo = (token) => {
+  return User.findOne({
+    emailVerificationToken: token,
+    emailVerificationExpiry: {
+      $gt: new Date(),
+    },
+  });
 };
 
-// Update a user's profile by ID and return the updated user without password and refreshToken fields
+export const findUserByResetPasswordTokenRepo = (token) => {
+  return User.findOne({
+    resetPasswordToken: token,
+    resetPasswordExpiry: {
+      $gt: new Date(),
+    },
+  }).select('+password');
+};
 
-export const updateUser = (id, data) => {
-  return User.findByIdAndUpdate(id, data, {
+/* ======================================
+   Update
+====================================== */
+
+export const updateUserRepo = (userId, updateData) => {
+  return User.findByIdAndUpdate(userId, updateData, {
     new: true,
+    runValidators: true,
   }).select('-password -refreshToken');
+};
+
+export const updateRefreshTokenRepo = (userId, refreshToken) => {
+  return User.findByIdAndUpdate(
+    userId,
+    {
+      refreshToken,
+    },
+    {
+      new: true,
+    }
+  ).select('+refreshToken');
+};
+
+export const removeRefreshTokenRepo = (userId) => {
+  return User.findByIdAndUpdate(
+    userId,
+    {
+      $unset: {
+        refreshToken: '',
+      },
+    },
+    {
+      new: true,
+    }
+  );
+};
+
+export const updatePasswordRepo = async (user, newPassword) => {
+  user.password = newPassword;
+
+  return user;
+};
+
+/* ======================================
+   Save
+====================================== */
+
+export const saveUserRepo = (user) => {
+  return user.save({
+    validateBeforeSave: false,
+  });
+};
+
+/* ======================================
+   Delete
+====================================== */
+
+export const deleteUserRepo = (userId) => {
+  return User.findByIdAndDelete(userId);
 };

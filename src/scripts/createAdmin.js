@@ -19,7 +19,7 @@ const createAdmin = async () => {
     await User.create({
       username: "Admin",
       email: "admin@gmail.com",
-      password: "admin12",
+      password: "admin123",
       role: "admin",
       isVerified: true,
     });

@@ -56,6 +56,7 @@ app.get('/health', (req, res) => {
 
 
 // Routes
+import { router as authRoutes } from './routes/auth.routes.js';
 import { router as userRoutes } from './routes/user.routes.js';
 import { router as productRoutes } from './routes/product.routes.js';
 import { router as categoryRoutes } from './routes/category.routes.js';
@@ -68,6 +69,7 @@ import { router as orderRoutes } from './routes/order.routes.js';
 import { router as paymentRoutes } from './routes/payment.routes.js'
 import { ApiError } from './utils/ApiError.js';
 
+app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/categories', categoryRoutes);

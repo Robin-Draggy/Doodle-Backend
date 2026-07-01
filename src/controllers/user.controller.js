@@ -1,169 +1,24 @@
-import {
-  getProfileService,
-  loginUserService,
-  logoutUserService,
-  registerUserService,
-  updateProfileService,
-} from '../services/user.service.js';
+import { getProfileService, updateProfileService } from '../services/user.service.js';
+
 import { AsyncHandler } from '../utils/AsyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
-import { ApiError } from '../utils/ApiError.js';
-import { cookieOptions } from '../utils/cookieOptions.js';
-import mongoose from 'mongoose';
-import crypto from 'crypto';
-import { sendEmail } from '../utils/SendEmail.js';
-import { User } from '../models/user.model.js';
 
-// Register a new user
-
-export const registerUser = AsyncHandler(async (req, res) => {
-  const user = await registerUserService(req.body, req.file);
-
-  return res.status(201).json(new ApiResponse(201, user, 'User registered successfully'));
-});
-
-// Verify email address
-
-export const verifyEmail = AsyncHandler(async (req, res) => {
-  const { token } = req.params;
-
-  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-
-  const user = await User.findOne({
-    emailVerificationToken: hashedToken,
-    emailVerificationExpiry: { $gt: Date.now() },
-  });
-
-  if (!user) {
-    throw new ApiError(400, 'Invalid or expired token');
-  }
-
-  user.isVerified = true;
-  user.emailVerificationToken = undefined;
-  user.emailVerificationExpiry = undefined;
-
-  await user.save({ validateBeforeSave: false });
-
-  res.status(200).json(new ApiResponse(200, null, 'Email verified successfully'));
-});
-
-// Forgot password
-
-export const forgotPassword = AsyncHandler(async (req, res) => {
-  console.log('req body', req.body);
-  const { email } = req.body;
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    throw new ApiError(404, 'User not found');
-  }
-
-  const token = user.generateResetPasswordToken();
-  await user.save({ validateBeforeSave: false });
-
-  const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
-
-  await sendEmail({
-    to: user.email,
-    subject: 'Password Reset Request',
-    text: `Reset your password: ${resetUrl}`,
-  });
-
-  res.status(200).json(new ApiResponse(200, null, 'Password reset link sent to email'));
-});
-
-// Reset password
-
-export const resetPassword = AsyncHandler(async (req, res) => {
-  const { token } = req.params;
-  const { password } = req.body;
-
-  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-
-  const user = await User.findOne({
-    resetPasswordToken: hashedToken,
-    resetPasswordExpiry: { $gt: Date.now() },
-  });
-
-  if (!user) {
-    throw new ApiError(400, 'Invalid or expired token');
-  }
-
-  user.password = password; // will be hashed by pre-save hook
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpiry = undefined;
-
-  await user.save();
-
-  res.status(200).json(new ApiResponse(200, null, 'Password reset successful'));
-});
-
-// Login user and set cookies for access and refresh tokens
-
-export const loginUser = AsyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    throw new ApiError(400, 'Email and password required');
-  }
-
-  const { user, accessToken, refreshToken } = await loginUserService(email, password);
-
-  res
-    .cookie('accessToken', accessToken, {
-      ...cookieOptions,
-      maxAge: 15 * 60 * 1000,
-    })
-    .cookie('refreshToken', refreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    })
-    .status(200)
-    .json(
-      new ApiResponse(200, 'Login successful', {
-        user,
-        accessToken,
-      })
-    );
-});
-
-// Logout user and clear cookies for access and refresh tokens
-
-export const logoutUser = AsyncHandler(async (req, res) => {
-  const userId = req?.user?._id;
-
-  if (!userId) {
-    throw new ApiError(401, 'Unauthorized');
-  }
-
-  await logoutUserService(userId);
-
-  res
-    .clearCookie('accessToken')
-    .clearCookie('refreshToken')
-    .status(200)
-    .json(new ApiResponse(200, 'Logout successful'));
-});
-
-// Get user profile
+/* =====================================================
+   Get Current User Profile
+===================================================== */
 
 export const getProfile = AsyncHandler(async (req, res) => {
-  const userId = req.user._id;
+  const user = await getProfileService(req.user._id);
 
-  const user = await getProfileService(userId);
-
-  return res.status(200).json(new ApiResponse(200, user, 'Profile fetched successfully'));
+  return res.status(200).json(new ApiResponse(200, user, 'Profile fetched successfully.'));
 });
 
-// Update user profile
+/* =====================================================
+   Update Current User Profile
+===================================================== */
 
 export const updateProfile = AsyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  const data = req.body;
-  const file = req.file;
+  const user = await updateProfileService(req.user._id, req.body, req.file);
 
-  const user = await updateProfileService(userId, data, file);
-
-  return res.status(200).json(new ApiResponse(200, user, 'Profile updated successfully'));
+  return res.status(200).json(new ApiResponse(200, user, 'Profile updated successfully.'));
 });
