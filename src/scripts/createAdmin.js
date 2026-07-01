@@ -1,34 +1,38 @@
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-import { User } from "../models/user.model.js";
-import { DB_NAME } from "../config/constants.js";
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+
+import { User } from '../models/user.model.js';
+import { DB_NAME } from '../config/constants.js';
 
 dotenv.config();
 
 const createAdmin = async () => {
   try {
-    await mongoose.connect(`${process.env.MONGODB_URL}/${DB_NAME}`);;
+    await mongoose.connect(`${process.env.MONGODB_URL}/${DB_NAME}`);
 
-    const existing = await User.findOne({ email: "admin@gmail.com" });
+    const existingAdmin = await User.findOne({
+      email: process.env.ADMIN_EMAIL,
+    });
 
-    if (existing) {
-      console.log("Admin already exists");
-      process.exit(0);
+    if (existingAdmin) {
+      console.log('✅ Admin already exists.');
+      return;
     }
 
     await User.create({
-      username: "Admin",
-      email: "admin@gmail.com",
-      password: "admin123",
-      role: "admin",
+      username: process.env.ADMIN_NAME,
+      email: process.env.ADMIN_EMAIL,
+      password: process.env.ADMIN_PASSWORD,
+      role: 'admin',
       isVerified: true,
     });
 
-    console.log("Admin created");
-    process.exit(0);
-  } catch (err) {
-    console.error("Seed error:", err);
-    process.exit(1);
+    console.log('✅ Admin account created.');
+  } catch (error) {
+    console.error('❌ Failed to create admin:', error);
+  } finally {
+    await mongoose.disconnect();
+    process.exit();
   }
 };
 
